@@ -1,0 +1,4 @@
+name: subdirect-representation
+depend: standard-library
+	agda-algebras
+include: src
