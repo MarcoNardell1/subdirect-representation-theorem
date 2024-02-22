@@ -97,5 +97,5 @@ postulate
   ZornsLemma : ∀ {c ℓ₁ ℓ₂ ℓ₃} (P : Poset c ℓ₁ ℓ₂)
              → (∀ (C : Chain c ℓ₁ ℓ₂ ℓ₃ (Relation.Binary.Poset.Carrier P))
                  → ∃[ x ] (IsUpperBound (_≤_ C) (isSubPoset C) x))
-             → ∃[ x ] (IsMaximal  (Relation.Binary.Poset._≈_ P)
-                                  (Relation.Binary.Poset._≤_ P) x) 
+             → ∃[ y ] (IsMaximal  (Relation.Binary.Poset._≈_ P)
+                                  (Relation.Binary.Poset._≤_ P) y) 
