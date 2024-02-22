@@ -4,7 +4,7 @@ module Lattice where
 open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLattice)
 open import Relation.Binary         using (Rel ; IsPartialOrder)
 open import Level                   using (Level ; _⊔_ ; suc)
-open import Relation.Unary          using (Pred ; _⊆_)
+open import Relation.Unary          using (Pred ; _⊆_ ; _∈_)
 open import Data.Product
 open import Data.Sum
 open import Algebra.Core            using (Op₂)
@@ -58,17 +58,18 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
     y≤x∨y {x} {y} = (proj₁ (supTwoElems {x} {y})) y (inj₂ eqReflPoset)
 
     lUpperbound : {x y : Carrier} (z : Carrier) → x ≤ z → y ≤ z
-                      → IsUpperBound _≤_ (subsetTwoElems {x} {y}) z
-    lUpperbound {x} {y} z x≤z y≤z = {!!} 
+                → IsUpperBound _≤_ (subsetTwoElems {x} {y}) z
+    lUpperbound {x} {y} z x≤z y≤z w (inj₁ x₁) = IsPartialOrder.≤-respˡ-≈ (isPartialOrder isCompleteLattice) x₁ x≤z
+    lUpperbound {x} {y} z x≤z y≤z w (inj₂ y₁) = IsPartialOrder.≤-respˡ-≈ (isPartialOrder isCompleteLattice) y₁ y≤z
                     
- 
-    supIsLeastUpperBound : {x y : Carrier} (z : Carrier) → x ≤ z → y ≤ z → (x ∨ y) ≤ z
+    supIsLeastUpperBound : {x y : Carrier} (z : Carrier)
+                         → x ≤ z → y ≤ z → (x ∨ y) ≤ z
     supIsLeastUpperBound {x} {y} z x≤z y≤z = proj₂ (supTwoElems {x} {y}) z
                                                    (lUpperbound {x} {y} z x≤z y≤z) 
 
     sup : Supremum (_≤_) _∨_
     sup x y = x≤x∨y {x} {y}  , y≤x∨y {x} {y} , λ z → supIsLeastUpperBound {x} {y} z
-
+    
     inf : Infimum (_≤_) _∧_
     inf x y = {!!} , {!!} , {!!}
 
@@ -77,7 +78,6 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
                        ; supremum = sup
                        ; infimum = inf
                        } 
-
 
 -- Meet-irreducible elements
 {-
