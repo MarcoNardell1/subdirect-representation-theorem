@@ -69,7 +69,8 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
                     
     supIsLeastUpperBound : {x y : Carrier} (z : Carrier)
                          → x ≤ z → y ≤ z → (x ∨ y) ≤ z
-    supIsLeastUpperBound {x} {y} z x≤z y≤z = proj₂ (supTwoElems {x} {y}) z
+    supIsLeastUpperBound {x} {y} z x≤z y≤z = proj₂ (supTwoElems {x} {y})
+                                                   z
                                                    (lUpperbound {x} {y} z x≤z y≤z) 
 
     sup : Supremum (_≤_) _∨_
@@ -97,7 +98,9 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
                                                 z≤y
     
     infIsGreatestLowerbound : {x y : Carrier} (z : Carrier) → z ≤ x → z ≤ y → z ≤ (x ∧ y)
-    infIsGreatestLowerbound {x} {y} z z≤x z≤y = proj₂ (infTwoElems {x} {y}) z (gUpperbound {x} {y} z z≤x z≤y)
+    infIsGreatestLowerbound {x} {y} z z≤x z≤y = proj₂ (infTwoElems {x} {y})
+                                                      z
+                                                      (gUpperbound {x} {y} z z≤x z≤y)
     
     inf : Infimum (_≤_) _∧_
     inf x y = x∧y≤x , x∧y≤y , λ z → infIsGreatestLowerbound {x} {y} z  
@@ -107,11 +110,3 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
                        ; supremum = sup
                        ; infimum = inf
                        } 
-
--- Meet-irreducible elements
-{-
-  Let 𝐋 be a complete lattice.
-  An element a is called meet-irreducible if a = b ∧ c implies a = b or a = c.
-  The element a is completely meet-irreducible if a ≠ 1_𝐋 and whenever a = ⋀_{i ∈ I} bᵢ,
-  there is a j ∈ I such that a = bⱼ.  
--}
