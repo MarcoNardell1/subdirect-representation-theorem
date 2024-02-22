@@ -19,6 +19,9 @@ open import Function                using (flip)
 IsUpperBound : ∀ {a ℓ ℓ₁} {A : Set a} → Rel A ℓ → Pred A ℓ₁ → Pred A _
 IsUpperBound _≤_ P x = ∀ y → P y → y ≤ x
 
+IsLowerBound : ∀ {a ℓ ℓ₁} {A : Set a} → Rel A ℓ → Pred A ℓ₁ → Pred A _
+IsLowerBound _≤_ P x = ∀ y → P y → x ≤ y
+
 IsSupremum : ∀ {a ℓ ℓ₁} {A : Set a} → Rel A ℓ → Pred A ℓ₁ → Pred A _
 IsSupremum _≤_ P x = IsUpperBound _≤_ P x × (∀ y → IsUpperBound _≤_ P y → x ≤ y)
 

@@ -33,24 +33,23 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 
   where
     open CompleteLattice CL
-    
+    -- utils
     subsetTwoElems : {x y : Carrier} → Pred (Carrier) _   
     subsetTwoElems {x} {y} z = (x ≈ z) ⊎ (y ≈ z)
-    
+
+    eqReflPoset = (IsPartialOrder.Eq.refl (isPartialOrder isCompleteLattice))
+   
+    -- binary operations
     _∨_ : Op₂ (Carrier)
     _∨_ = λ x y → ⋁ (subsetTwoElems {x} {y})
 
     _∧_ : Op₂ (Carrier)
     _∧_ = λ x y → ⋀ (subsetTwoElems {x} {y})
 
+    -- proof of _∨_ is supremum
     supTwoElems : {x y : Carrier} → IsSupremum _≤_ subsetTwoElems (⋁ subsetTwoElems)
     supTwoElems {x} {y} = isSupremum isCompleteLattice (subsetTwoElems {x} {y})
-
-    infTwoElems : {x y : Carrier} → IsInfimum _≤_ subsetTwoElems (⋀ subsetTwoElems)
-    infTwoElems {x} {y} = isInfimum isCompleteLattice (subsetTwoElems {x} {y})
-
-    eqReflPoset = (IsPartialOrder.Eq.refl (isPartialOrder isCompleteLattice))
-    
+ 
     x≤x∨y :{x y : Carrier} →  x ≤ (x ∨ y)
     x≤x∨y {x} {y} =  (proj₁ (supTwoElems {x} {y})) x (inj₁ eqReflPoset)
 
@@ -59,8 +58,14 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 
     lUpperbound : {x y : Carrier} (z : Carrier) → x ≤ z → y ≤ z
                 → IsUpperBound _≤_ (subsetTwoElems {x} {y}) z
-    lUpperbound {x} {y} z x≤z y≤z w (inj₁ x₁) = IsPartialOrder.≤-respˡ-≈ (isPartialOrder isCompleteLattice) x₁ x≤z
-    lUpperbound {x} {y} z x≤z y≤z w (inj₂ y₁) = IsPartialOrder.≤-respˡ-≈ (isPartialOrder isCompleteLattice) y₁ y≤z
+    lUpperbound {x} {y} z x≤z y≤z _ (inj₁ x₁) = IsPartialOrder.≤-respˡ-≈
+                                                (isPartialOrder isCompleteLattice)
+                                                x₁
+                                                x≤z
+    lUpperbound {x} {y} z x≤z y≤z _ (inj₂ y₁) = IsPartialOrder.≤-respˡ-≈
+                                                (isPartialOrder isCompleteLattice)
+                                                y₁
+                                                y≤z
                     
     supIsLeastUpperBound : {x y : Carrier} (z : Carrier)
                          → x ≤ z → y ≤ z → (x ∨ y) ≤ z
@@ -69,9 +74,33 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 
     sup : Supremum (_≤_) _∨_
     sup x y = x≤x∨y {x} {y}  , y≤x∨y {x} {y} , λ z → supIsLeastUpperBound {x} {y} z
+
+    -- proof of _∧_ is infimum
+    infTwoElems : {x y : Carrier} → IsInfimum _≤_ subsetTwoElems (⋀ subsetTwoElems)
+    infTwoElems {x} {y} = isInfimum isCompleteLattice (subsetTwoElems {x} {y})
+
+    x∧y≤x : {x y : Carrier} → (x ∧ y) ≤ x
+    x∧y≤x {x} {y} = proj₁ (infTwoElems {x} {y}) x (inj₁ eqReflPoset)
+
+    x∧y≤y : {x y : Carrier} → (x ∧ y) ≤ y
+    x∧y≤y {x} {y} = proj₁ (infTwoElems {x} {y}) y (inj₂ eqReflPoset)
+
+    gUpperbound : {x y : Carrier} (z : Carrier) → z ≤ x → z ≤ y
+                → IsLowerBound _≤_ (subsetTwoElems {x} {y}) z
+    gUpperbound {x} {y} z z≤x z≤y _ (inj₁ x₁) = IsPartialOrder.≤-respʳ-≈
+                                                 (isPartialOrder isCompleteLattice)
+                                                 x₁
+                                                 z≤x
+    gUpperbound {x} {y} z z≤x z≤y _ (inj₂ y₁) = IsPartialOrder.≤-respʳ-≈
+                                                (isPartialOrder isCompleteLattice)
+                                                y₁
+                                                z≤y
+    
+    infIsGreatestLowerbound : {x y : Carrier} (z : Carrier) → z ≤ x → z ≤ y → z ≤ (x ∧ y)
+    infIsGreatestLowerbound {x} {y} z z≤x z≤y = proj₂ (infTwoElems {x} {y}) z (gUpperbound {x} {y} z z≤x z≤y)
     
     inf : Infimum (_≤_) _∧_
-    inf x y = {!!} , {!!} , {!!}
+    inf x y = x∧y≤x , x∧y≤y , λ z → infIsGreatestLowerbound {x} {y} z  
 
     isLattice : IsLattice (_≈_) (_≤_) (_∨_) (_∧_)
     isLattice = record { isPartialOrder = isPartialOrder (isCompleteLattice)
