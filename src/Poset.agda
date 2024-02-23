@@ -1,7 +1,7 @@
 module Poset where
 
 -- Standard library imports
-open import Relation.Binary         using (Rel ; IsPartialOrder; Poset; Maximum)
+open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred ; _⊆_)
 open import Relation.Nullary        using (¬_)
@@ -58,24 +58,24 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
   A Poset 𝐏 is called linear or chain, if it satisfies:
     (∀ x, y ∈ P) → x ≤ y ⊎ y ≤ x
 -}
-record IsChain {a ℓ₁ ℓ₂} {A : Set a} (_≈_ : Rel A ℓ₁)
-               (_≤_ : Rel A ℓ₂) : Set (suc (a ⊔ ℓ₁ ⊔ ℓ₂)) where
+record IsChain {a ℓ₁ ℓ₂ ℓ₃} {A : Set a} (P : Pred A ℓ₃) (_≈_ : Rel A ℓ₁)
+               (_≤_ : Rel A ℓ₂) : Set (suc (a ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₃)) where
   field
     isPartialOrder : IsPartialOrder _≈_ _≤_
-    isChain : ∀ {x y : A} → x ≤ y ⊎ y ≤ x
+    isChain : ∀ {x y : A} → P x → P y → x ≤ y ⊎ y ≤ x
 open IsChain
   
-record Chain c ℓ₁ ℓ₂ : Set (suc(c ⊔ ℓ₁ ⊔ ℓ₂)) where
+record Chain c ℓ₁ ℓ₂ ℓ₃ (C : Set c) : Set (suc(c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ ℓ₃)) where
   infix 4 _≈_ _≤_
   field
-    Carrier : Set c
-    _≈_ : Rel Carrier ℓ₁
-    _≤_ : Rel Carrier ℓ₂
+    isSubPoset : Pred C ℓ₃ 
+    _≈_ : Rel C ℓ₁
+    _≤_ : Rel C ℓ₂
     isPartialOrder : IsPartialOrder _≈_ _≤_
-    isChain : IsChain _≈_ _≤_
+    isChain : IsChain isSubPoset _≈_ _≤_
 open Chain
 
-ChainIsPoset : ∀ {c ℓ₁ ℓ₂} → Chain c ℓ₁ ℓ₂ → Poset c ℓ₁ ℓ₂
+ChainIsPoset : ∀ {c ℓ₁ ℓ₂ ℓ₃} {Cr : Set c} → Chain c ℓ₁ ℓ₂ ℓ₃ Cr → Poset c ℓ₁ ℓ₂
 ChainIsPoset C = record { isPartialOrder = isPartialOrder C }
 
 -- maximal elements
@@ -86,3 +86,16 @@ ChainIsPoset C = record { isPartialOrder = isPartialOrder C }
 IsMaximal : ∀ {a ℓ₁ ℓ₂} {A : Set a} → Rel A ℓ₁ → Rel A ℓ₂ → A → Set (a ⊔ ℓ₁ ⊔ ℓ₂)
 IsMaximal _≈_ _≤_ x = ¬ (∃[ y ] (x ≤ y ×  ¬(x ≈ y)))
 
+-- Zorn's Lemma
+{-
+  Let 𝐏 be a nonempty Poset, Suppose that every chain in P has an upper bound.
+  Then 𝐏 has a maximal element
+-}
+
+-- Assuming Zorn's Lemma as an axiom
+postulate
+  ZornsLemma : ∀ {c ℓ₁ ℓ₂ ℓ₃} (P : Poset c ℓ₁ ℓ₂)
+             → (∀ (C : Chain c ℓ₁ ℓ₂ ℓ₃ (Relation.Binary.Poset.Carrier P))
+                 → ∃[ x ] (IsUpperBound (_≤_ C) (isSubPoset C) x))
+             → ∃[ y ] (IsMaximal  (Relation.Binary.Poset._≈_ P)
+                                  (Relation.Binary.Poset._≤_ P) y) 
