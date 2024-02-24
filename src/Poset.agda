@@ -93,9 +93,13 @@ IsMaximal _≈_ _≤_ x = ¬ (∃[ y ] (x ≤ y ×  ¬(x ≈ y)))
 -}
 
 -- Assuming Zorn's Lemma as an axiom
-postulate
-  ZornsLemma : ∀ {c ℓ₁ ℓ₂ ℓ₃} (P : Poset c ℓ₁ ℓ₂)
-             → (∀ (C : Chain c ℓ₁ ℓ₂ ℓ₃ (Relation.Binary.Poset.Carrier P))
+ZornsLemma : ∀ {c ℓ₁ ℓ₂ ℓ₃} (P : Poset c ℓ₁ ℓ₂) → Set _
+ZornsLemma {c} {ℓ₁} {ℓ₂} {ℓ₃} P = (∀ (C : Chain c ℓ₁ ℓ₂ ℓ₃ A)
                  → ∃[ x ] (IsUpperBound (_≤_ C) (isSubPoset C) x))
-             → ∃[ y ] (IsMaximal  (Relation.Binary.Poset._≈_ P)
-                                  (Relation.Binary.Poset._≤_ P) y) 
+             → ∃[ y ] (IsMaximal  _≈p_
+                                  _≤p_ y)
+  where
+  open Poset P renaming ( _≤_ to _≤p_
+                        ; _≈_ to _≈p_
+                        ; Carrier to A
+                        ) 
