@@ -110,3 +110,24 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
                        ; supremum = sup
                        ; infimum = inf
                        } 
+
+-- Meet-irreducible elements
+{-
+  Let 𝐋 be a complete lattice.
+  An element a is called meet-irreducible if a = b ∧ c implies a = b or a = c.
+  The element a is completely meet-irreducible if a ≠ 1_𝐋 and whenever a = ⋀_{i ∈ I} bᵢ,
+  there is a j ∈ I such that a = bⱼ.  
+-}
+
+module MeetIrreducible {c ℓ₁ ℓ₂} {CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁} where
+
+  L : Lattice c ℓ₁ ℓ₂
+  L = CompleteLatticeIsLattice CL
+  open Lattice L renaming (Carrier to A)
+
+  IsMeetIrreducible : Pred A _
+  IsMeetIrreducible x = ∀ b c → x ≈ (b ∧ c) → (x ≈ b) ⊎ (x ≈ c)
+
+open MeetIrreducible
+  
+                  
