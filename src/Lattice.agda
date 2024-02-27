@@ -5,6 +5,7 @@ open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLatt
 open import Relation.Binary         using (Rel ; IsPartialOrder)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred ; _⊆_ ; _∈_)
+open import Relation.Nullary        using (¬_)
 open import Data.Product
 open import Data.Sum
 open import Algebra.Core            using (Op₂)
@@ -120,14 +121,24 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 -}
 
 module MeetIrreducible {c ℓ₁ ℓ₂} {CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁} where
+  open CompleteLattice CL
 
   L : Lattice c ℓ₁ ℓ₂
   L = CompleteLatticeIsLattice CL
-  open Lattice L renaming (Carrier to A)
+  open Lattice L renaming ( Carrier to A
+                          ; _≈_ to _≈l_
+                          )
 
   IsMeetIrreducible : Pred A _
-  IsMeetIrreducible x = ∀ b c → x ≈ (b ∧ c) → (x ≈ b) ⊎ (x ≈ c)
+  IsMeetIrreducible x = ∀ b c → x ≈l (b ∧ c) → (x ≈l b) ⊎ (x ≈l c)
+
+  IsCompletelyMeetIrreducible : Pred A _
+  IsCompletelyMeetIrreducible x = ¬ (x ≈ (1L CL)) × (∀ P → (⋀ P) ≈ x → P x)
 
 open MeetIrreducible
-  
-                  
+
+{-
+  TODO:
+  - Definir la compatibilidad por igualdad
+  - Asumiendo prueba por absurdo, formalizar 3.22 
+-} 

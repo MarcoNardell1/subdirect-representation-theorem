@@ -3,9 +3,10 @@ module Poset where
 -- Standard library imports
 open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
-open import Relation.Unary          using (Pred ; _⊆_)
+open import Relation.Unary          using (Pred ; _∈_ ; U)
 open import Relation.Nullary        using (¬_)
 open import Data.Product            using (_×_ ; ∃; ∃-syntax)
+open import Data.Unit.Polymorphic   using (⊤)
 open import Data.Sum                using (_⊎_) 
 open import Function                using (flip)
 
@@ -52,6 +53,16 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
 
+1L : ∀ {c ℓ₁ ℓ₂ ℓ₃ ℓ₄} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄) → CompleteLattice.Carrier CL   
+1L CL = ⋁ λ x → ⊤
+  where
+  open CompleteLattice CL
+
+0L : ∀ {c ℓ₁ ℓ₂ ℓ₃ ℓ₄} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄) → CompleteLattice.Carrier CL
+0L CL = ⋀ λ x → ⊤ 
+  where
+  open CompleteLattice CL
+  
 -- Requisites for Zorn's Lemma
 --- Notion of Chain 
 {-
