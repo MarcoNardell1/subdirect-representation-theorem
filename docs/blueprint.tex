@@ -1,0 +1,108 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{hyperref}
+
+\title{Formalización del teorema de representación subdirecta}
+\author{Marco Nardelli}
+
+\begin{document}
+
+\maketitle
+
+\section{Introducción}
+El objetivo de este proyecto es el estudio de Álgebra Universal y la formalización de algunos resultados de esta área. Para ello, este trabajo consistirá en formalizar es el teorema de representación subdirecta (Birkhoff, 1944) \cite{ref_article1}. En las próximas secciones de este documento se detallan las definiciones y lemas auxiliares necesarios para entender y saber qué modelar a la hora de formalizar la prueba del teorema. La herramienta a utilizar para dicha formalización es el asistente de pruebas \href{https://agda.readthedocs.io/en/v2.6.0.1/getting-started/what-is-agda.html}{\textit{Agda}},tomando como base la librería de \href{https://ualib.org/}{Álgebra Universal de Agda}, desarrollada por William DeMeo.
+
+\section{Presentación del teorema}
+\paragraph{Teorema de representación subdirecta}
+\textit{Toda álgebra no trivial es isomorfa a un producto subdirecto de álgebras subdirectamente irreducibles}
+
+\subsection{Descomposición y estructura de la prueba:}
+A continuación, presentamos un listado, con detalles de las definiciones y resultados necesarios para realizar el trabajo. 
+\subsubsection{Definición de Álgebra:}
+Un álgebra es un par $\langle A, F \rangle$ donde A es un conjunto no vacío y $F = \langle f_i \colon i \in I \rangle$ es una familia de operaciones sobre A, indexada en un conjunto I.
+Llamamos a la función $\rho \colon I \to \omega$, la función de tipo de \textbf{A}. Esta función asigna a cada $i \in I$ el rango de $f_i$.
+
+Diremos que un álgebra es trivial si su universo tiene cardinalidad 1.
+\subsubsection{Definición de Subálgebra:}
+Dadas álgebras $\textbf{A} = \langle A, F \rangle$ y $\textbf{B} = \langle B, G \rangle$ del mismo tipo $\rho \colon I \to \omega$, diremos que \textbf{B} es subálgebra de \textbf{A} si $B \subseteq A$ y para cada $i \in I, \quad g_i = f_i|_{B^{\rho(i)}}$ 
+\subsubsection{Homomorfismos, isomorfismos y embeddings:}
+\paragraph{Definición de Homomorfismo:}
+Dadas álgebras $\textbf{A} = \langle A, F \rangle$ y $\textbf{B} = \langle B, G \rangle$ del mismo tipo. Una función $h \colon B \to A$ se le llama homomorfismo si para cada $i \in I$ y para cada $b_1, \dots, b_n \in B$, $h(g_i(b_1, \dots, b_n)) = f_i(h(b_1), \dots, h(b_n))$
+\paragraph{Definición de embedding}
+Llamaremos embedding a la función $h \colon \textbf{A} \to \textbf{B}$ si es un homomorfismo inyectivo.
+\paragraph{Definición de isomorfismo}
+Si $h \colon \textbf{A} \to \textbf{B}$ es un homomorfismo biyectivo, luego \textbf{A} y \textbf{B} son llamados isomorfos. 
+\subsubsection{Producto directo, subdirecto y álgebras subdirectamente irreducibles:}
+\paragraph{Definición de producto directo:}
+Sea $\mathcal{S} = \langle S_i \colon i \in I \rangle$ una secuencia de conjuntos. El \textit{producto directo} de S es el conjunto 
+\[ \prod_{i \in I} S_i = \{ f \colon I \to \bigcup_{i \in I} |(\forall i \in I) f(i) \in S_i\} \]
+Sea $\mathcal{A} = \langle \textbf{A}_i \colon i \in I \rangle$ una secuencia de álgebras del mismo tipo. El producto directo de la secuencia es el álgebra \textbf{B} con universo $B = \prod_{i \in I} A_i$ y para cada símbolo de operación g y $f_1, \dots , f_n \in B$ tenemos 
+\[ (g^{\textbf{B}} (f_1,\dots, f_n))(i) = g^{\textbf{A}_i}(f_1(i),\dots, f_n(i)), \quad \forall i \in I\]
+\paragraph{Definición de producto subdirecto:} 
+Un álgebra \textbf{B} es un \textit{producto subdirecto} de $\langle \textbf{A}_i \colon i \in I \rangle$ si \textbf{B} es un subálgebra de $\prod_{i \in I} \textbf{A}_i$ y para cada $i \in I$, $\textit{p}_i|_B \colon \textbf{B} \to \textbf{A}_i$ es suryectiva.
+\paragraph{Definición de subdirect embedding}
+Dado un embedding $ g \colon \textbf{B} \to \prod_{i \in I} \textbf{A}_i$ es llamado subdirecto si $g(\textbf{B})$ es un producto subdirecto de $\langle \textbf{A}_i \colon i \in I \rangle$.
+\paragraph{Definición de álgebra subdirectamente irreducible:}
+Un álgebra no trivial \textbf{A} es llamada subdirectamente irreducible si para todo subdirect embedding $h \colon \textbf{A} \to \prod_{i \in I}\textbf{A}_i$, hay un $j \in I$ tal que $p_j \circ h \colon \textbf{A} \to \textbf{A}_j$ es un isomorfismo.
+
+\subsubsection{Relaciones de equivalencias y congruencias}
+\paragraph{Definición de relación de equivalencia:}
+Sea A un conjunto, dada una relación binaria $\theta$, es una relación de equivalencia sobre A si para todos $x, y,z \in A$ se tiene que:
+
+$x \theta x \quad (reflexividad)$
+
+$x \theta y \Rightarrow y \theta x \quad (simetria)$
+
+$x \theta y \land y \theta z \Rightarrow x \theta z \quad (transitividad)$
+\paragraph{Definición de kernel}
+Sea $f \colon A \to B$ una función cualquiera. definimos 
+\[ ker f = \{ (x,y) \in A^2 \colon f(x) = f(y)\},\]
+llamada el kernel de f.
+
+\paragraph{Clases de equivalencias}
+Sea $\theta$ una relación de equivalencia sobre A. Para $a \in A$ escribimos
+\[ a / \theta = \{ x \in A \colon a \theta x \}, \]
+le llamamos la clase de equivalencia de a modulo $\theta$. Y podemos escribir el conjunto $A/ \theta$, el cociente de A por $\theta$, que contiene todas las clases de equivalencias modulo $\theta$.
+
+\paragraph{Definición de congruencia}
+Sea \textbf{A} un álgebra y $\theta$ una relación de equivalencia sobre A, llamamos congruencia sobre \textbf{A} si $\theta$ satisface que para cada operación básica f se da: 
+\[ x_1 \theta y_1 \land \dots \land x_n \theta y_n \Rightarrow f(x_1, \dots, x_n) \theta f(y_1, \dots, y_n)\]
+
+\paragraph{Definición de álgebra cociente}
+Sea \textbf{A} un álgebra y $\theta$ una congruencia sobre \textbf{A}. El álgebra cociente $\textbf{A}/\theta$ es un álgebra similar a \textbf{A}, con universo $A/\theta$ y con las operaciones básicas definidas con la ecuación:
+\[f^{\textbf{A}/\theta}(a_1/\theta,\dots,a_n/\theta) = f^{\textbf{A}}(a_1,\dots,a_n)/\theta\]
+
+\paragraph{Mas notación para entender los lemas auxiliares a formalizar:}
+Sea $0_A = \{(x,x) \colon x \in A\}$ y $1_A = A \times A$, son clases de equivalencias sobre A.
+
+\subsubsection{Definición de Elementos meet-irreducibles}
+Sea \textbf{L} un reticulado completo. Un elemento a es llamado meet-irreducible si $a = b\land c$ implica que a=b o a=c. Un elemento es completely meet-irreducible si $a\neq 1_L$ y $a = \bigwedge_{i \in I} b_i$, hay un $j \in I$ tal que $a = b_j$. 
+\subsubsection{Lemas auxiliares a formalizar:}
+\paragraph{Proposición sobre subdirect embeddings:}
+Sea \textbf{A} un álgebra y sea $\theta_i$ una congruencia sobre \textbf{A} para todo $i \in I$. Si $\bigcap_{i \in I} \theta_i = 0_A$, luego el mapeo natural $\textbf{A} \to \prod_{i \in I} \textbf{A}/ \theta_i$ es un subdirect embedding. Contrariamente, si $g \colon \textbf{A} \to \prod \textbf{B}_i$ es un subdirect embedding, luego con $\theta_i = ker(p_i \circ g)$, tenemos que $\cap \theta_i = 0_A$ y $\textbf{A}/\theta_i \cong \textbf{B}$
+
+\paragraph{Lema de Zorn:}
+Sea \textbf{P} un poset no vacío. Supongamos que toda cadena en P tiene una cota superior. Luego \textbf{P} tiene un elemento maximal.
+
+\paragraph{Teorema de álgebras subdirectamente irreducibles:}
+Un álgebra \textbf{A} es subdirectamente irreducible si y solo si $0_A$ es completamente meet-irreducible en Con \textbf{A}. Mas generalmente, si $\theta$ es una congruencia sobre un álgebra \textbf{A}, luego $\textbf{A}/\theta$ es subdirectamente irreducible si y solo si $\theta$ es completamente meet-irreducible en Con \textbf{A}.
+
+\paragraph{Lema de elementos completely meet-irreducible}
+Sea a un elemento de un reticulado completo \textbf{L} las siguientes son equivalentes:
+\begin{enumerate}
+    \item a es completely meet-irreducible
+    \item Hay un elemento $c \in L$ tal que $a < c$ y para cada $x \in L$, $a < x$ implica $ c \leq x$
+\end{enumerate}
+
+\subsection{Observaciones:}
+\begin{itemize}
+    \item En la librería de Algebra Universal de Agda, ya se encuentran modeladas las nociones de producto, congruencia y subálgebras. \url{https://github.com/ualib/agda-algebras} 
+    \item La prueba del teorema de birkhoff invoca resultados sin llamarlos, por ejemplo el lema de elementos completely meet-irreducibles parece ser necesario y el teorema de algebras subdirectamente irreducibles tambien es utilizado. 
+\end{itemize}
+
+\begin{thebibliography}{1}
+
+\bibitem{ref_article1} Clifford Bergman: Universal Algebra Fundamentals and Selected Topics (2011)
+
+\end{thebibliography}
+\end{document}
