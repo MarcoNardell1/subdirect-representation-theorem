@@ -16,7 +16,6 @@ open import Function                using (flip)
   A complete lattice is a partial ordered set in which all subsets have both supremum and infimum.
   𝐏 = ⟨ P , ≤ ⟩, ∀ X ⊆ P exists ⋁ X and ⋀ X.  
 -}
-
 IsUpperBound : ∀ {a ℓ ℓ₁} {A : Set a} → Rel A ℓ → Pred A ℓ₁ → Pred A _
 IsUpperBound _≤_ P x = ∀ y → P y → y ≤ x
 
@@ -52,6 +51,12 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋁_ : Op Carrier {ℓ₃}
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
+
+
+CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
+CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
+  where
+  open CompleteLattice CL
 
 1L : ∀ {c ℓ₁ ℓ₂ ℓ₃ ℓ₄} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄) → CompleteLattice.Carrier CL   
 1L CL = ⋁ λ x → ⊤
@@ -113,4 +118,4 @@ ZornsLemma {c} {ℓ₁} {ℓ₂} {ℓ₃} P = (∀ (C : Chain c ℓ₁ ℓ₂ �
   open Poset P renaming ( _≤_ to _≤p_
                         ; _≈_ to _≈p_
                         ; Carrier to A
-                        ) 
+                          ) 

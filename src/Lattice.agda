@@ -2,6 +2,7 @@ module Lattice where
 
 -- Standard library imports
 open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLattice)
+open import Relation.Binary.Properties.Poset using (_<_)
 open import Relation.Binary         using (Rel ; IsPartialOrder)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred ; _⊆_ ; _∈_)
@@ -120,25 +121,53 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
   there is a j ∈ I such that a = bⱼ.  
 -}
 
-module MeetIrreducible {c ℓ₁ ℓ₂} {CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁} where
+
+postulate
+  absurd : ∀ {ℓ} → ∀ (P : Set ℓ) → ¬(¬ P) → P
+
+
+{-
+  TODO: 
+  - Asumiendo prueba por absurdo, formalizar 3.22
+-}
+
+module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ ℓ₁} where
   open CompleteLattice CL
 
-  L : Lattice c ℓ₁ ℓ₂
+  L : Lattice c ℓ₁ ℓ₁
   L = CompleteLatticeIsLattice CL
   open Lattice L renaming ( Carrier to A
                           ; _≈_ to _≈l_
+                          ; _≤_ to _≤l_
                           )
 
-  IsMeetIrreducible : Pred A _
-  IsMeetIrreducible x = ∀ b c → x ≈l (b ∧ c) → (x ≈l b) ⊎ (x ≈l c)
+  -- Check if an element is meet-irreducible
+  IsMI : Pred A _
+  IsMI x = ∀ b c → x ≈l (b ∧ c) → (x ≈l b) ⊎ (x ≈l c)
 
-  IsCompletelyMeetIrreducible : Pred A _
-  IsCompletelyMeetIrreducible x = ¬ (x ≈ (1L CL)) × (∀ P → (⋀ P) ≈ x → P x)
+  -- check if an element is completely meet-irreducible
+  IsCMI : Pred A _
+  IsCMI x = ¬ (x ≈ (1L CL)) × (∀ P → (⋀ P) ≈ x → P x)
+
+  _<CL_ : Rel A _
+  _<CL_ = _<_ (CompleteLatticeIsPoset CL)
+  
+  -- enunciando el lema 3.22
+  CMI→Cover : (a : A) → IsCMI a → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
+  CMI→Cover a p = c' , {!!} , λ x x₁ → {!!}
+    where
+      
+      X : Pred Carrier ℓ₁
+      X = λ x → a <CL x
+      
+      c' : A
+      c' = ⋀ X
+
+  cover→CMI : (a : A) → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x)) → IsCMI a
+  cover→CMI a c' = absurd {!!} {!!}
+    where
+
+      X : Pred Carrier ℓ₁
+      X = λ x → a <CL x
 
 open MeetIrreducible
-
-{-
-  TODO:
-  - Definir la compatibilidad por igualdad
-  - Asumiendo prueba por absurdo, formalizar 3.22 
--} 
