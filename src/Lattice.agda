@@ -2,13 +2,13 @@ module Lattice where
 
 -- Standard library imports
 open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLattice)
-open import Relation.Binary.Properties.Poset using (_<_)
 open import Relation.Binary         using (Rel ; IsPartialOrder)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred ; _⊆_ ; _∈_)
 open import Relation.Nullary        using (¬_)
 open import Data.Product
 open import Data.Sum
+open import Data.Empty
 open import Algebra.Core            using (Op₂)
 
 -- Local imports
@@ -123,7 +123,7 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 
 
 postulate
-  absurd : ∀ {ℓ} → ∀ (P : Set ℓ) → ¬(¬ P) → P
+  absurd : ∀ {ℓ} (P : Set ℓ) → ¬(¬ P) → P
 
 
 {-
@@ -150,19 +150,19 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   IsCMI x = ¬ (x ≈ (1L CL)) × (∀ P → (⋀ P) ≈ x → P x)
 
   _<CL_ : Rel A _
-  _<CL_ = _<_ (CompleteLatticeIsPoset CL)
+  a <CL b = a ≤ b × ¬ (a ≈ b) 
   
   -- enunciando el lema 3.22
   CMI→Cover : (a : A) → IsCMI a → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
-  CMI→Cover a p = c' , {!!} , λ x x₁ → {!!}
+  CMI→Cover a p = c' , absurd (a <CL c') (⊥-elim {! !}) , λ x x₁ → {!!}
     where
-      
+ 
       X : Pred Carrier ℓ₁
       X = λ x → a <CL x
       
       c' : A
       c' = ⋀ X
-
+      
   cover→CMI : (a : A) → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x)) → IsCMI a
   cover→CMI a c' = absurd {!!} {!!}
     where
