@@ -7,7 +7,8 @@ open import Function using (_∘_)
 
 open import Base.Algebras  {𝑆 = 𝑆}
 open import Base.Subalgebras.Subalgebras {𝑆 = 𝑆} 
-open import Base.Functions using (IsSurjective)
+open import Base.Functions using (IsSurjective ; Image_∋_)
+open import Base.Homomorphisms
 
 private variable α β i : Level
 
@@ -24,7 +25,7 @@ IsSubdirectProduct {I = I} 𝐁 𝓐 𝐁≤𝓐 = (j : I) → IsSurjective (f j
     f : (j : I) → ∣ 𝐁 ∣ → ∣ 𝓐 j ∣
     f j  b = ((proj₁ ( proj₁ 𝐁≤𝓐)) b) j 
 
-record SubdirectProduct : Set (ov (i ⊔ α ⊔ β)) -- Set ( ov (𝓞 ⊔ 𝓥 ⊔ i ⊔ suc α))
+record SubdirectProduct : Set (ov (i ⊔ α ⊔ β))
   where
   field
       ix : Set i
@@ -33,3 +34,27 @@ record SubdirectProduct : Set (ov (i ⊔ α ⊔ β)) -- Set ( ov (𝓞 ⊔ 𝓥 
       isSubAlg : subalg ≤ ⨅ alg 
       isSubdirProd : IsSubdirectProduct {I = ix} subalg alg isSubAlg 
 open SubdirectProduct
+
+
+-- Subdirect embeddings
+{-
+  An embedding g : 𝐁 → ⨅ 𝐀ᵢ is called subdirect if DirImage(g(𝐁)) is a subdirect product of ⟨ 𝐀ᵢ : i ∈ I ⟩.
+  g is also called the subdirect representation of 𝐁
+-}
+
+record SubdirectEmbedding : Set (ov (i ⊔ α ⊔ β))
+  where
+  field
+    ix : Set i
+    family : ix → Algebra α
+    base : Algebra β
+    rep : mon base (⨅ family) -- A monomorphism is a embedding (An injective homomorphism)
+{-
+  TODO:
+  - definir la imagen directa de una funcion, f : A → B
+  DirImage(f) : Sb (A) → Sb (B)
+  DirImage(f) X = {f(x) : x ∈ X}
+  - Lema de imagen directa de un homomorfismo
+-}
+--    isSubdirProd : IsSubdirectProduct {I = ix} 
+
