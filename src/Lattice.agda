@@ -121,16 +121,6 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
   there is a j ∈ I such that a = bⱼ.  
 -}
 
-
-postulate
-  absurd : ∀ {ℓ} (P : Set ℓ) → ¬(¬ P) → P
-
-
-{-
-  TODO: 
-  - Asumiendo prueba por absurdo, formalizar 3.22
--}
-
 module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ ℓ₁} where
   open CompleteLattice CL
 
@@ -142,32 +132,84 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
                           )
 
   -- Check if an element is meet-irreducible
-  IsMI : Pred A _
+  IsMI : Pred Carrier _
   IsMI x = ∀ b c → x ≈l (b ∧ c) → (x ≈l b) ⊎ (x ≈l c)
 
   -- check if an element is completely meet-irreducible
-  IsCMI : Pred A _
+  IsCMI : Pred Carrier _
   IsCMI x = ¬ (x ≈ (1L CL)) × (∀ P → (⋀ P) ≈ x → P x)
 
-  _<CL_ : Rel A _
-  a <CL b = a ≤ b × ¬ (a ≈ b) 
-  
-  -- enunciando el lema 3.22
-  CMI→Cover : (a : A) → IsCMI a → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
-  CMI→Cover a p = c' , absurd (a <CL c') (⊥-elim {! !}) , λ x x₁ → {!!}
+-- Some strict order properties 
+  _<CL_ : Rel Carrier _
+  a <CL b = a ≤ b × ¬ (a ≈ b)
+
+  <CL-trans :  ∀ (x y z : Carrier) → (x <CL y) × (y ≤ z) → x <CL z
+  <CL-trans x y z ((x≤y , ¬x≈y) , y≤z) = trans x≤y y≤z , ¬x≈z x≤y y≤z ¬x≈y
     where
- 
+      ¬x≈z : x ≤ y → y ≤ z → ¬ (x ≈ y) → ¬ (x ≈ z)
+      ¬x≈z x≤y y≤z ¬x≈y = {!!}   
+
+  <CL-eq : ∀ (x y z : Carrier) → x <CL y → y ≈ z → x <CL z
+  <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x y z x≤y y≈z , ¬≈-trans x y z ¬x≈y y≈z
+  
+  <CL-irr : ∀ (x : Carrier) → x <CL x → ⊥
+  <CL-irr x (_ , x≠x) = x≠x (≈-refl x)
+  
+  -- Lemma
+  {-
+  Suppose that a is an element of a Complete Lattice 𝐋. The following are equivalent
+  (a) a is completely meet irreducible
+
+  (b) There is an element c ∈ L such that a < c and for every x ∈ L, a < x implies that c ≤ x. 
+  -}
+  CMI→Cover : (a : Carrier) → IsCMI a → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
+  CMI→Cover a p = c' , (LB≤⋀ X a aIsLowerBound , abs) , meetL X
+    where
+    
       X : Pred Carrier ℓ₁
       X = λ x → a <CL x
       
       c' : A
       c' = ⋀ X
-      
-  cover→CMI : (a : A) → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x)) → IsCMI a
-  cover→CMI a c' = absurd {!!} {!!}
-    where
 
+      aIsLowerBound : IsLowerBound _≤_ X a
+      aIsLowerBound y a≤y = proj₁ a≤y
+
+      abs : a ≈ c' → ⊥
+      abs a=c' = <CL-irr a a<a
+        where
+          a<a : a <CL a
+          a<a = proj₂ p X (Eq.sym a=c')
+    
+  cover→CMI : (a : Carrier)  → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))  → IsCMI a
+  cover→CMI a p = ⊥-elim (abs (a<c , c≤Inf))
+    where
+    
       X : Pred Carrier ℓ₁
       X = λ x → a <CL x
+      
+      inf : Carrier
+      inf = ⋀ X
+
+      c' : Carrier
+      c' = proj₁ p
+
+      aIsInf : inf ≈ a × (¬ X a)
+      aIsInf = {!!}
+      
+      cIsLowerBound : IsLowerBound _≤_ X c'
+      cIsLowerBound y a≤y = proj₂ (proj₂ p) y a≤y
+
+      abs : (a <CL c') × (c' ≤ (⋀ X)) → ⊥
+      abs a<c≤⋀X = <CL-irr a a<⋀X
+        where
+          a<⋀X : a <CL a
+          a<⋀X = <CL-eq a inf a (<CL-trans a c' inf a<c≤⋀X) (proj₁ aIsInf)
+
+      a<c : a <CL c'
+      a<c = proj₁ (proj₂ p)
+
+      c≤Inf : c' ≤ (⋀ X)
+      c≤Inf = LB≤⋀ X c' cIsLowerBound
 
 open MeetIrreducible

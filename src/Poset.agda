@@ -52,7 +52,22 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
 
-
+  open IsCompleteLattice isCompleteLattice
+  postulate
+    meetL : ∀ X x → X x → (⋀ X) ≤ x
+    ≈-refl : ∀ x → x ≈ x
+    ¬≈-trans : ∀ x y z → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
+    LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
+    ≤-eq : ∀ x y z → x ≤ y → y ≈ z → x ≤ z
+ {- meetL : ∀ X x → X x → (⋀ X) ≤ x
+  meetL X x p = {!!} 
+ 
+  ≈-refl : ∀ x → x ≈ x
+  ≈-refl x = {!!}
+ 
+  LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
+  LB≤⋀ X x LB = {!!}
+ -}
 CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
 CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
   where
