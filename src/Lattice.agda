@@ -120,6 +120,8 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
   The element a is completely meet-irreducible if a ≠ 1_𝐋 and whenever a = ⋀_{i ∈ I} bᵢ,
   there is a j ∈ I such that a = bⱼ.  
 -}
+postulate
+  absurd : ∀ {ℓ} (P : Set ℓ) → ¬ (¬ P) → P
 
 module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ ℓ₁} where
   open CompleteLattice CL
@@ -147,13 +149,13 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   <CL-trans x y z ((x≤y , ¬x≈y) , y≤z) = trans x≤y y≤z , ¬x≈z x≤y y≤z ¬x≈y
     where
       ¬x≈z : x ≤ y → y ≤ z → ¬ (x ≈ y) → ¬ (x ≈ z)
-      ¬x≈z x≤y y≤z ¬x≈y = {!!}   
+      ¬x≈z x≤y y≤z ¬x≈y = λ x₁ → ¬x≈y (antisym x≤y (≤-eq  y≤z (Eq.sym x₁)))   
 
   <CL-eq : ∀ (x y z : Carrier) → x <CL y → y ≈ z → x <CL z
-  <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x y z x≤y y≈z , ¬≈-trans x y z ¬x≈y y≈z
+  <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x≤y y≈z , ¬≈-trans ¬x≈y y≈z
   
   <CL-irr : ∀ (x : Carrier) → x <CL x → ⊥
-  <CL-irr x (_ , x≠x) = x≠x (≈-refl x)
+  <CL-irr x (_ , x≠x) = x≠x ≈-refl
   
   -- Lemma
   {-
@@ -182,7 +184,7 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
           a<a = proj₂ p X (Eq.sym a=c')
     
   cover→CMI : (a : Carrier)  → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))  → IsCMI a
-  cover→CMI a p = ⊥-elim (abs (a<c , c≤Inf))
+  cover→CMI a p = absurd {!!} (⊥-elim (abs (a<c , c≤Inf))) 
     where
     
       X : Pred Carrier ℓ₁
@@ -194,9 +196,6 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
       c' : Carrier
       c' = proj₁ p
 
-      aIsInf : inf ≈ a × (¬ X a)
-      aIsInf = {!!}
-      
       cIsLowerBound : IsLowerBound _≤_ X c'
       cIsLowerBound y a≤y = proj₂ (proj₂ p) y a≤y
 
@@ -204,7 +203,7 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
       abs a<c≤⋀X = <CL-irr a a<⋀X
         where
           a<⋀X : a <CL a
-          a<⋀X = <CL-eq a inf a (<CL-trans a c' inf a<c≤⋀X) (proj₁ aIsInf)
+          a<⋀X = <CL-eq a inf a (<CL-trans a c' inf a<c≤⋀X) {!!} --(proj₁ aIsInf)
 
       a<c : a <CL c'
       a<c = proj₁ (proj₂ p)
