@@ -5,7 +5,7 @@ open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred ; _∈_ ; U)
 open import Relation.Nullary        using (¬_)
-open import Data.Product            using (_×_ ; ∃; ∃-syntax)
+open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂)
 open import Data.Unit.Polymorphic   using (⊤)
 open import Data.Sum                using (_⊎_) 
 open import Function                using (flip)
@@ -41,6 +41,7 @@ record IsCompleteLattice {a ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set a}
       isPartialOrder : IsPartialOrder _≈_ _≤_
       isSupremum : ∀ (P : Pred A ℓ₃) → IsSupremum _≤_ P (⋁ P)     
       isInfimum :  ∀ (P : Pred A ℓ₄) → IsInfimum _≤_ P (⋀ P)
+    open IsPartialOrder isPartialOrder
 open IsCompleteLattice public
 
 record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ suc ℓ₃ ⊔ suc ℓ₄)) where
@@ -51,23 +52,32 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋁_ : Op Carrier {ℓ₃}
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
-
-  open IsCompleteLattice isCompleteLattice
-  postulate
-    meetL : ∀ X x → X x → (⋀ X) ≤ x
-    ≈-refl : ∀ x → x ≈ x
-    ¬≈-trans : ∀ x y z → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
-    LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
-    ≤-eq : ∀ x y z → x ≤ y → y ≈ z → x ≤ z
- {- meetL : ∀ X x → X x → (⋀ X) ≤ x
-  meetL X x p = {!!} 
+  open IsCompleteLattice isCompleteLattice 
+  meetL : ∀ X x → X x → (⋀ X) ≤ x
+  meetL X x p = proj₁ (isInfimum isCompleteLattice X) x p  
  
-  ≈-refl : ∀ x → x ≈ x
-  ≈-refl x = {!!}
+  ≈-refl : ∀ {x} → x ≈ x
+  ≈-refl = IsPartialOrder.Eq.refl (isPartialOrder isCompleteLattice)
+
+  ¬≈-trans : ∀ {x y z} → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
+  ¬≈-trans ¬x≈y y≈z x≈z = ¬x≈y (trans x≈z (sym y≈z))
+    where
+      trans = IsPartialOrder.Eq.trans (isPartialOrder isCompleteLattice)
+
+      sym = IsPartialOrder.Eq.sym (isPartialOrder isCompleteLattice)
  
   LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
-  LB≤⋀ X x LB = {!!}
- -}
+  LB≤⋀ X x LB = proj₂ (isInfimum isCompleteLattice X) x LB
+
+  ≤-eq : ∀ {x y z} → x ≤ y → y ≈ z → x ≤ z
+  ≤-eq {x} {y} {z} x≤y y≈z = trans x≤y (y≤z y≈z)
+    where
+      trans = IsPartialOrder.trans (isPartialOrder isCompleteLattice)
+
+      y≤z : y ≈ z → y ≤ z
+      y≤z y≈z = proj₁ (IsPartialOrder.≤-resp-≈ (isPartialOrder isCompleteLattice))
+                  y≈z (IsPartialOrder.refl (isPartialOrder isCompleteLattice))
+
 CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
 CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
   where
