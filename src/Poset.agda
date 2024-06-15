@@ -41,7 +41,8 @@ record IsCompleteLattice {a ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set a}
       isPartialOrder : IsPartialOrder _≈_ _≤_
       isSupremum : ∀ (P : Pred A ℓ₃) → IsSupremum _≤_ P (⋁ P)     
       isInfimum :  ∀ (P : Pred A ℓ₄) → IsInfimum _≤_ P (⋀ P)
-    open IsPartialOrder isPartialOrder
+    module PO = IsPartialOrder isPartialOrder
+    open PO public
 open IsCompleteLattice public
 
 record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ suc ℓ₃ ⊔ suc ℓ₄)) where
@@ -52,31 +53,24 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋁_ : Op Carrier {ℓ₃}
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
-  open IsCompleteLattice isCompleteLattice 
+  module CL = IsCompleteLattice isCompleteLattice 
   meetL : ∀ X x → X x → (⋀ X) ≤ x
-  meetL X x p = proj₁ (isInfimum isCompleteLattice X) x p  
+  meetL X x p =  proj₁ (CL.isInfimum X) x p  
  
   ≈-refl : ∀ {x} → x ≈ x
-  ≈-refl = IsPartialOrder.Eq.refl (isPartialOrder isCompleteLattice)
+  ≈-refl = CL.Eq.refl 
 
   ¬≈-trans : ∀ {x y z} → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
-  ¬≈-trans ¬x≈y y≈z x≈z = ¬x≈y (trans x≈z (sym y≈z))
-    where
-      trans = IsPartialOrder.Eq.trans (isPartialOrder isCompleteLattice)
+  ¬≈-trans ¬x≈y y≈z x≈z = ¬x≈y (CL.Eq.trans x≈z (CL.Eq.sym y≈z))
 
-      sym = IsPartialOrder.Eq.sym (isPartialOrder isCompleteLattice)
- 
   LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
-  LB≤⋀ X x LB = proj₂ (isInfimum isCompleteLattice X) x LB
+  LB≤⋀ X x LB = proj₂ (CL.isInfimum X) x LB
 
   ≤-eq : ∀ {x y z} → x ≤ y → y ≈ z → x ≤ z
-  ≤-eq {x} {y} {z} x≤y y≈z = trans x≤y (y≤z y≈z)
+  ≤-eq {x} {y} {z} x≤y y≈z = CL.trans x≤y (y≤z y≈z) 
     where
-      trans = IsPartialOrder.trans (isPartialOrder isCompleteLattice)
-
       y≤z : y ≈ z → y ≤ z
-      y≤z y≈z = proj₁ (IsPartialOrder.≤-resp-≈ (isPartialOrder isCompleteLattice))
-                  y≈z (IsPartialOrder.refl (isPartialOrder isCompleteLattice))
+      y≤z y≈z = proj₁ CL.≤-resp-≈ y≈z CL.refl
 
 CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
 CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
