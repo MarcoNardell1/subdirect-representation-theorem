@@ -53,7 +53,8 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋁_ : Op Carrier {ℓ₃}
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
-  module CL = IsCompleteLattice isCompleteLattice 
+  module CL = IsCompleteLattice isCompleteLattice
+  open CL public
   meetL : ∀ X x → X x → (⋀ X) ≤ x
   meetL X x p =  proj₁ (CL.isInfimum X) x p  
  

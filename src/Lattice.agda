@@ -146,10 +146,10 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   a <CL b = a ≤ b × ¬ (a ≈ b)
 
   <CL-trans :  ∀ (x y z : Carrier) → (x <CL y) × (y ≤ z) → x <CL z
-  <CL-trans x y z ((x≤y , ¬x≈y) , y≤z) = trans x≤y y≤z , ¬x≈z x≤y y≤z ¬x≈y
+  <CL-trans x y z ((x≤y , ¬x≈y) , y≤z) = CL.trans x≤y y≤z , ¬x≈z x≤y y≤z ¬x≈y
     where
       ¬x≈z : x ≤ y → y ≤ z → ¬ (x ≈ y) → ¬ (x ≈ z)
-      ¬x≈z x≤y y≤z ¬x≈y = λ x₁ → ¬x≈y (antisym x≤y (≤-eq  y≤z (Eq.sym x₁)))   
+      ¬x≈z x≤y y≤z ¬x≈y = λ x₁ → ¬x≈y (CL.antisym x≤y (≤-eq  y≤z (CL.Eq.sym x₁)))   
 
   <CL-eq : ∀ (x y z : Carrier) → x <CL y → y ≈ z → x <CL z
   <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x≤y y≈z , ¬≈-trans ¬x≈y y≈z
@@ -181,10 +181,10 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
       abs a=c' = <CL-irr a a<a
         where
           a<a : a <CL a
-          a<a = proj₂ p X (Eq.sym a=c')
+          a<a = proj₂ p X (CL.Eq.sym a=c')
     
   cover→CMI : (a : Carrier)  → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))  → IsCMI a
-  cover→CMI a p = absurd {!!} (⊥-elim (abs (a<c , c≤Inf))) 
+  cover→CMI a p = absurd (IsCMI a) (⊥-elim (abs (a<c , c≤Inf))) 
     where
     
       X : Pred Carrier ℓ₁
