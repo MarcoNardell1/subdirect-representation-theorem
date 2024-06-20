@@ -54,16 +54,15 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
   module CL = IsCompleteLattice isCompleteLattice
-  open CL public
   meetL : ∀ X x → X x → (⋀ X) ≤ x
   meetL X x p =  proj₁ (CL.isInfimum X) x p  
- 
-  ≈-refl : ∀ {x} → x ≈ x
-  ≈-refl = CL.Eq.refl 
 
   ¬≈-trans : ∀ {x y z} → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
   ¬≈-trans ¬x≈y y≈z x≈z = ¬x≈y (CL.Eq.trans x≈z (CL.Eq.sym y≈z))
 
+  ¬≈-transˡ : ∀ {x y z} → ¬ (x ≈ y) → x ≈ z → ¬ (z ≈ y)
+  ¬≈-transˡ ¬x≈y x≈z z≈y = ¬x≈y (CL.Eq.trans x≈z z≈y)
+  
   LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
   LB≤⋀ X x LB = proj₂ (CL.isInfimum X) x LB
 
@@ -72,6 +71,12 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     where
       y≤z : y ≈ z → y ≤ z
       y≤z y≈z = proj₁ CL.≤-resp-≈ y≈z CL.refl
+ 
+  ≤-eqˡ : ∀ {x y z} → x ≤ y → x ≈ z → z ≤ y
+  ≤-eqˡ {x} {y} {z} x≤y x≈z = CL.trans (z≤x x≈z) x≤y
+    where
+      z≤x : x ≈ z → z ≤ x 
+      z≤x x≈z = proj₂ CL.≤-resp-≈ x≈z CL.refl
 
 CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
 CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
