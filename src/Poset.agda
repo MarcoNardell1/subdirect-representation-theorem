@@ -3,9 +3,10 @@ module Poset where
 -- Standard library imports
 open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
-open import Relation.Unary          using (Pred ; _⊆_)
+open import Relation.Unary          using (Pred ; _∈_ ; U)
 open import Relation.Nullary        using (¬_)
-open import Data.Product            using (_×_ ; ∃; ∃-syntax)
+open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂)
+open import Data.Unit.Polymorphic   using (⊤)
 open import Data.Sum                using (_⊎_) 
 open import Function                using (flip)
 
@@ -15,7 +16,6 @@ open import Function                using (flip)
   A complete lattice is a partial ordered set in which all subsets have both supremum and infimum.
   𝐏 = ⟨ P , ≤ ⟩, ∀ X ⊆ P exists ⋁ X and ⋀ X.  
 -}
-
 IsUpperBound : ∀ {a ℓ ℓ₁} {A : Set a} → Rel A ℓ → Pred A ℓ₁ → Pred A _
 IsUpperBound _≤_ P x = ∀ y → P y → y ≤ x
 
@@ -41,6 +41,8 @@ record IsCompleteLattice {a ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set a}
       isPartialOrder : IsPartialOrder _≈_ _≤_
       isSupremum : ∀ (P : Pred A ℓ₃) → IsSupremum _≤_ P (⋁ P)     
       isInfimum :  ∀ (P : Pred A ℓ₄) → IsInfimum _≤_ P (⋀ P)
+    module PO = IsPartialOrder isPartialOrder
+    open PO public
 open IsCompleteLattice public
 
 record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ ⊔ ℓ₂ ⊔ suc ℓ₃ ⊔ suc ℓ₄)) where
@@ -51,7 +53,46 @@ record CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Set (suc (c ⊔ ℓ₁ �
     ⋁_ : Op Carrier {ℓ₃}
     ⋀_ : Op Carrier {ℓ₄}
     isCompleteLattice : IsCompleteLattice _≈_ _≤_ ⋁_ ⋀_
+  module CL = IsCompleteLattice isCompleteLattice
+  meetL : ∀ X x → X x → (⋀ X) ≤ x
+  meetL X x p =  proj₁ (CL.isInfimum X) x p  
 
+  ¬≈-trans : ∀ {x y z} → ¬ (x ≈ y) → y ≈ z → ¬ (x ≈ z)
+  ¬≈-trans ¬x≈y y≈z x≈z = ¬x≈y (CL.Eq.trans x≈z (CL.Eq.sym y≈z))
+
+  ¬≈-transˡ : ∀ {x y z} → ¬ (x ≈ y) → x ≈ z → ¬ (z ≈ y)
+  ¬≈-transˡ ¬x≈y x≈z z≈y = ¬x≈y (CL.Eq.trans x≈z z≈y)
+  
+  LB≤⋀ : ∀ X x → IsLowerBound _≤_ X x → x ≤ (⋀ X)
+  LB≤⋀ X x LB = proj₂ (CL.isInfimum X) x LB
+
+  ≤-eq : ∀ {x y z} → x ≤ y → y ≈ z → x ≤ z
+  ≤-eq {x} {y} {z} x≤y y≈z = CL.trans x≤y (y≤z y≈z) 
+    where
+      y≤z : y ≈ z → y ≤ z
+      y≤z y≈z = proj₁ CL.≤-resp-≈ y≈z CL.refl
+ 
+  ≤-eqˡ : ∀ {x y z} → x ≤ y → x ≈ z → z ≤ y
+  ≤-eqˡ {x} {y} {z} x≤y x≈z = CL.trans (z≤x x≈z) x≤y
+    where
+      z≤x : x ≈ z → z ≤ x 
+      z≤x x≈z = proj₂ CL.≤-resp-≈ x≈z CL.refl
+
+CompleteLatticeIsPoset : ∀ {c ℓ₁ ℓ₂} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₁ ℓ₁) → Poset c ℓ₁ ℓ₂
+CompleteLatticeIsPoset CL = record {isPartialOrder = isPartialOrder isCompleteLattice}
+  where
+  open CompleteLattice CL
+
+1L : ∀ {c ℓ₁ ℓ₂ ℓ₃ ℓ₄} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄) → CompleteLattice.Carrier CL   
+1L CL = ⋁ λ x → ⊤
+  where
+  open CompleteLattice CL
+
+0L : ∀ {c ℓ₁ ℓ₂ ℓ₃ ℓ₄} (CL : CompleteLattice c ℓ₁ ℓ₂ ℓ₃ ℓ₄) → CompleteLattice.Carrier CL
+0L CL = ⋀ λ x → ⊤ 
+  where
+  open CompleteLattice CL
+  
 -- Requisites for Zorn's Lemma
 --- Notion of Chain 
 {-
@@ -102,4 +143,4 @@ ZornsLemma {c} {ℓ₁} {ℓ₂} {ℓ₃} P = (∀ (C : Chain c ℓ₁ ℓ₂ �
   open Poset P renaming ( _≤_ to _≤p_
                         ; _≈_ to _≈p_
                         ; Carrier to A
-                        ) 
+                          ) 
