@@ -3,14 +3,15 @@ open import Overture using ( 𝓞 ; 𝓥 ; Signature ; ∣_∣)
 module Prod {𝑆 : Signature 𝓞 𝓥} where 
 open import Level
 open import Data.Product
-open import Function using (_∘_)
+open import Relation.Binary using (Setoid)
+open import Function using (_∘_ ; Func)
 
-open import Base.Algebras  {𝑆 = 𝑆}
-open import Base.Subalgebras.Subalgebras {𝑆 = 𝑆} 
-open import Base.Functions using (IsSurjective ; Image_∋_)
-open import Base.Homomorphisms
+open import Setoid.Algebras  {𝑆 = 𝑆}
+open import Setoid.Subalgebras.Subalgebras {𝑆 = 𝑆} 
+open import Setoid.Functions using (isSurj)
+open import Setoid.Homomorphisms
 
-private variable α β i : Level
+private variable α β ρᵅ ρᵝ i : Level
 
 
 -- Type of SubdirectProduct
@@ -19,18 +20,22 @@ private variable α β i : Level
   a subalgebra of ⨅_(i ∈ I) 𝐀ᵢ, and for every j ∈ I, pⱼ|B : 𝐁 → 𝐀ᵢ is surjective. 
 -}
 
-IsSubdirectProduct : ∀ {I : Set i} (𝐁 : Algebra β) (𝓐 : I → Algebra α) → 𝐁 ≤ (⨅ 𝓐) → Set (i ⊔ β ⊔ α)
-IsSubdirectProduct {I = I} 𝐁 𝓐 𝐁≤𝓐 = (j : I) → IsSurjective (f j)
+IsSubdirectProduct : ∀ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ)
+                   → 𝐁 ≤ (⨅ 𝓐)
+                   → Set (i ⊔ β ⊔ ρᵝ ⊔ α ⊔ ρᵅ)
+IsSubdirectProduct {I = I} 𝐁 𝓐 𝐁≤𝓐 = (j : I) → isSurj (f j)
   where
-    f : (j : I) → ∣ 𝐁 ∣ → ∣ 𝓐 j ∣
-    f j  b = ((proj₁ ( proj₁ 𝐁≤𝓐)) b) j 
+    open Func (proj₁ (proj₁ 𝐁≤𝓐)) renaming (f to projⱼ)
 
-record SubdirectProduct : Set (ov (i ⊔ α ⊔ β))
+    f : (j : I) → 𝕌[ 𝐁 ] → 𝕌[ 𝓐 j ]
+    f j  b = projⱼ b j
+
+record SubdirectProduct : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))
   where
   field
       ix : Set i
-      alg :  ix → Algebra α
-      subalg : Algebra β
+      alg :  ix → Algebra α ρᵅ
+      subalg : Algebra β ρᵝ
       isSubAlg : subalg ≤ ⨅ alg 
       isSubdirProd : IsSubdirectProduct {I = ix} subalg alg isSubAlg 
 open SubdirectProduct
@@ -42,12 +47,12 @@ open SubdirectProduct
   g is also called the subdirect representation of 𝐁
 -}
 
-record SubdirectEmbedding : Set (ov (i ⊔ α ⊔ β))
+record SubdirectEmbedding : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))
   where
   field
     ix : Set i
-    family : ix → Algebra α
-    base : Algebra β
+    family : ix → Algebra α ρᵅ
+    base : Algebra β ρᵝ
     rep : mon base (⨅ family) -- A monomorphism is a embedding (An injective homomorphism)
 {-
   TODO:
