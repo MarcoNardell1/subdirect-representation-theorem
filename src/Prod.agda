@@ -45,7 +45,7 @@ record SubdirectProduct : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))
       subalg : Algebra β ρᵝ
       isSubAlg : subalg ≤ ⨅ family 
       isSubdirProd : IsSubdirectProduct {I = ix} subalg family isSubAlg 
-open SubdirectProduct
+
 
 {- Some Homomorphic images properties -} 
 module _ {𝐀 : Algebra α ρᵅ} {𝐁 : Algebra β ρᵝ} {f : hom 𝐀 𝐁} where
@@ -86,12 +86,20 @@ module _ {𝐀 : Algebra α ρᵅ} {𝐁 : Algebra β ρᵝ} {f : hom 𝐀 𝐁}
   An embedding g : 𝐁 → ⨅ 𝐀ᵢ is called subdirect if DirImage(g(𝐁)) is a subdirect product of ⟨ 𝐀ᵢ : i ∈ I ⟩.
   g is also called the subdirect representation of 𝐁
 -}
+--isSubdirectEmbedding : ∀ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) → mon 𝐁 (⨅ 𝓐) → Set _
+module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where 
+   open Algebra 𝐁 renaming (Domain to B)
+   open Algebra (⨅ 𝓐) renaming (Domain to A)
 
-record SubdirectEmbedding : Set  (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))
-  where
-  field
-    ix : Set i
-    family : ix → Algebra α ρᵅ
-    base : Algebra β ρᵝ
-    rep : mon base (⨅ family) -- A monomorphism is an embedding (An injective homomorphism)
---    subalg : {!HomImageOf[ IsMon.HomReduct (proj₂ rep) ]!} 
+   genAlgFromMon : (h : mon 𝐁 (⨅ 𝓐)) → Algebra (β ⊔ (α ⊔ i) ⊔ (ρᵅ ⊔ i)) (ρᵅ ⊔ i)
+   genAlgFromMon h = HomImageOf[ mon→hom 𝐁 (⨅ 𝓐) h ]
+       
+   record IsSubEmb (h : Func B A) : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))  where
+     field
+       Mon : IsMon 𝐁 (⨅ 𝓐) h
+       genAlg≤Prod : (genAlgFromMon (h , Mon)) ≤ (⨅ 𝓐) 
+       IsSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon)) 𝓐 genAlg≤Prod
+     
+   subdirectEmbedding : Set ((ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ)))
+   subdirectEmbedding = Σ (Func B A) IsSubEmb
+
