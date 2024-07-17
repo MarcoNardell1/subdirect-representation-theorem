@@ -1,17 +1,20 @@
 open import Overture using ( 𝓞 ; 𝓥 ; Signature ; ∣_∣)
 
-module Prod {𝑆 : Signature 𝓞 𝓥} where 
+module Prod {𝑆 : Signature 𝓞 𝓥} where
+open import Agda.Builtin.Equality using (_≡_)
 open import Level
 open import Data.Product
-open import Relation.Binary using (Setoid)
+open import Relation.Binary using (Setoid) renaming (Rel to BinRel)
 open import Function using (_∘_ ; Func)
 open import Function.Construct.Composition using (function)
 
+open import Base.Relations using (0[_])
 open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Subalgebras.Subalgebras {𝑆 = 𝑆} 
-open import Setoid.Functions using (IsSurjective ; IsBijective)
-open import Setoid.Homomorphisms hiding (_≅_)
-open import Setoid.Homomorphisms.Isomorphisms
+open import Setoid.Functions using (IsSurjective ; IsBijective ; BijInv)
+open import Setoid.Homomorphisms {𝑆 = 𝑆} hiding (_≅_ ; mkiso)
+open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆}
+
 
 open Func renaming (f to <$>) 
 
@@ -112,14 +115,41 @@ If ⋂_{i ∈ I} θᵢ = 0_A then the natrual map 𝐀 → ⨅_{i∈ I} 𝐀/θ�
 Conversely,  if g → 𝐀 ⨅ 𝐁ᵢ is a subdirect embedding then θᵢ = ker(pᵢ ∘ g), we have ∩θᵢ = 0_A and 𝐀/θᵢ ⋍ 𝐁ᵢ.
 -}
 
+prodQuot : ∀ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ = ℓ}) → Algebra (α ⊔ i) (i ⊔ ℓ)
+prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
+  where
+    family : I → Algebra α ℓ 
+    family  i = 𝐀 ╱ (θ i)
 
+module _ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ}) where
+  open Algebra 𝐀 renaming (Domain to A)
+  open Setoid A renaming (Carrier to Car)
 
--- Definition of subdirectly irreducible
-{-
-  A nontrivial algebra 𝐀 is called subdirectly irreducible
-  if for every subdirect embedding h : 𝐀 → ⨅_{i∈ I} 𝐀ᵢ,
-  there is a j ∈ I such that pⱼ ∘ h : 𝐀 → 𝐀ⱼ is an isomorphism. 
--}
+  famOfCons : I → Algebra α ℓ
+  famOfCons i = 𝐀 ╱ (θ i)
+  
+  prodOfQuot : Algebra (α ⊔ i) (i ⊔ ℓ)
+  prodOfQuot = prodQuot {I = I} 𝐀 θ
+
+  open Algebra prodOfQuot renaming (Domain to ⨅A/θ)
+  open Setoid ⨅A/θ renaming (Carrier to pCar)
+
+  NatMap : Func A ⨅A/θ
+  NatMap = record { f = λ x j → x ; cong = λ x=y j → IsCongruence.reflexive (proj₂ (θ j)) x=y }
+
+  familyOfRels : (I → Con 𝐀 {ℓ}) → I → BinRel Car ℓ
+  familyOfRels θ = λ i → proj₁ (θ i) 
+
+  -- First statement of proposition
+
+  ⋂ᵣ : ∀ {i ρ s} (I : Set i) → (I → BinRel Car ρ) → BinRel Car (ρ ⊔ i ⊔ s)
+  ⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
+
+  NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ ρᵅ ⊔ ℓ} I (familyOfRels θ)) ≡ 0[ Car ] {ρ = ℓ ⊔ ρᵅ ⊔ i}
+                 → IsSubEmb 𝐀 famOfCons  NatMap
+  NatMapIsSubEmb p = {!!}
+
+-- Defining Isomorphisms as a bijective homomorphism
 module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
   open Algebra 𝐀 renaming (Domain to A)
   open Algebra 𝐁 renaming (Domain to B)
@@ -131,11 +161,40 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
       
   Iso : Set ((ov((α ⊔ ρᵅ ⊔ β ⊔ ρᵝ ⊔ ρᵝ)))) 
   Iso = Σ (Func A B) IsIso
+{-
+  Iso→≅ : (h : Iso) → 𝐀 ≅ 𝐁
+  Iso→≅ h = mkiso hom→ ←hom (λ b → {!!}) {!!}
+    where
+      open IsIso (proj₂ h)
+      open IsHom Hom
+      open Setoid A renaming (refl to refla; _≈_ to _≈ₐ_)
+      open Setoid B renaming (refl to reflb; _≈_ to _≈b_)
 
-  {- TODO
-  Probar que dado (h : Iso 𝐀 𝐁) → 𝐀 ⋍ 𝐁
-  -}
+      h⁻¹ : Func B A
+      h⁻¹ = BijInv (proj₁ h) IsBij
+ 
+      hom→ : hom 𝐀 𝐁
+      hom→ = (proj₁ h) , Hom
 
+      ←hom : hom 𝐁 𝐀
+      ←hom = h⁻¹ , record { compatible = λ {f} {a} → {!!} } 
+     
+      eqb : ∀ (a : 𝕌[ 𝐀 ]) → <$> h⁻¹ (<$> (proj₁ h) a) ≈ₐ a
+      eqb a = {!!}
+-}
+
+{-
+IsIso : (Hom A B) → Set
+IsIso h = Σ[ i ∈ Iso A B ] (ext-eq h (from i))
+  where ext-eq : (f g : Hom A B) → Set
+        ext-eq f g = (∀ a : D[ A ]) → f a ≈ g a
+-}
+-- Definition of subdirectly irreducible
+{-
+  A nontrivial algebra 𝐀 is called subdirectly irreducible
+  if for every subdirect embedding h : 𝐀 → ⨅_{i∈ I} 𝐀ᵢ,
+  there is a j ∈ I such that pⱼ ∘ h : 𝐀 → 𝐀ⱼ is an isomorphism. 
+-}
 
 IsSubIrreducible : ∀ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓐 : I → Algebra α ρᵅ)
                  → ∀ (h : SubdirectEmbedding 𝐀 𝓐)
