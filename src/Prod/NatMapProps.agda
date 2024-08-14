@@ -1,20 +1,87 @@
 open import Overture using ( 𝓞 ; 𝓥 ; Signature ; ∣_∣)
 
 module Prod.NatMapProps {𝑆 : Signature 𝓞 𝓥} where
-open import Agda.Builtin.Equality using (_≡_)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_ ; cong-app)
 open import Level
 open import Data.Product
 open import Relation.Binary using (Setoid) renaming (Rel to BinRel)
+open import Relation.Nullary using (¬_)
 open import Function using (Func)
 open import Function.Construct.Composition using (function)
 
-open import Base.Relations using (0[_])
+open import Base.Relations using (0[_] ; ker)
 open import Setoid.Algebras  {𝑆 = 𝑆}
+open import Setoid.Homomorphisms {𝑆 = 𝑆}
+open import Setoid.Functions  using (IsInjective)
 
 open import Prod.Subembedding
 
 private variable α β ρᵅ ρᵝ i : Level
 
+open Func renaming (f to <$>) 
+
+
+-- arbitray intersection
+
+⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
+⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
+
+-- family of homomorphisms
+module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where
+  record FamOfHoms : Set (ov (i ⊔ α ⊔ β ⊔ ρᵅ ⊔ ρᵝ)) where
+    field
+      family : ∀ (j : I) → hom 𝐁 (𝓐 j)
+
+-- separate points
+module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where
+  famSeparatePoints : (h : FamOfHoms 𝐁 𝓐) → Set (i ⊔ β ⊔ α)
+  famSeparatePoints h = (x  y : 𝕌[ 𝐁 ]) → Σ[ j ∈ I ] (pred j x y) 
+    where
+      open FamOfHoms h
+      pred : (j : I) (x y : 𝕌[ 𝐁 ]) → Set α
+      pred j x y = ¬ (<$> (proj₁ (family j)) x) ≡ (<$> (proj₁ (family j)) y)   
+
+
+-- proposition 3.14
+{-
+  Let hᵢ be a homomorphism from 𝐁 to 𝐀ᵢ, for each i ∈ I, and let h = ⊓_{i ∈ I} hᵢ.
+  Then ker (h) = ⋂ᵣ I ker(hᵢ). Furthermore the following are equivalent:
+  (a) The family ⟨ hᵢ : i ∈ I ⟩ separate points
+  (b) h is injective
+  (c) ⋂ᵣ I ker(hᵢ) = 0_B
+-}
+
+
+module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (h : FamOfHoms 𝐁 𝓐) where
+
+  open Algebra 𝐁 renaming (Domain to B)
+  open Setoid B renaming (Carrier to Car)
+  open FamOfHoms h
+
+  kerOfFam : I → BinRel 𝕌[ 𝐁 ] α
+  kerOfFam j = ker (<$> (proj₁ (family j)))
+  
+  {- A prod of homomorphisms h = ⨅ hᵢ, where ⟨ hᵢ : hom 𝐁 (𝓐 i) ⟩ is a family of homomorphisms,
+  is such that h(b)(i) = hᵢ(b)
+  -} 
+  IsProdOfHoms : hom 𝐁 (⨅ 𝓐)
+  IsProdOfHoms  = F , record { compatible = λ j → IsHom.compatible (proj₂ (family j))}
+    where
+      F : Func (𝔻[ 𝐁 ]) (𝔻[ (⨅ 𝓐) ])
+      F = record { f = λ b i  → <$> (proj₁ (family i)) b  ; cong = λ {x} {y} x=y j → cong (proj₁ (family j)) x=y }
+
+
+  kerOfProd→⋂kers : ∀ (a b : 𝕌[ 𝐁 ]) → (ker (<$> (proj₁ IsProdOfHoms))) a b → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
+  kerOfProd→⋂kers a b  a≈ₖb i = lift (cong-app a≈ₖb i)
+
+  ⋂kers→kerOfProd : ∀ (a b : 𝕌[ 𝐁 ]) → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b → (ker (<$> (proj₁ IsProdOfHoms))) a b
+  ⋂kers→kerOfProd a b a≈⋂b = {!!} 
+
+  postulate
+    firstEquiv : famSeparatePoints 𝐁 𝓐 h → IsInjective (proj₁ IsProdOfHoms)
+    secondEquiv : IsInjective (proj₁ IsProdOfHoms) → ⋂ᵣ {s = i ⊔ β} I kerOfFam ≡ 0[ Car ] {ρ = i ⊔ α ⊔ β}
+    thirdEquiv : ⋂ᵣ {s = i ⊔ β} I kerOfFam ≡ 0[ Car ] {ρ = i ⊔ α ⊔ β} → famSeparatePoints 𝐁 𝓐 h
 {-
 Proposition: Let 𝐀 an algebra and let θᵢ a congruence on 𝐀 for every i ∈ I.
 If ⋂_{i ∈ I} θᵢ = 0_A then the natrual map 𝐀 → ⨅_{i∈ I} 𝐀/θᵢ is a subdirect embedding.
@@ -47,13 +114,6 @@ module _ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ})
   familyOfRels θ = λ i → proj₁ (θ i) 
 
   -- First statement of proposition
-
-  ⋂ᵣ : ∀ {i ρ s} (I : Set i) → (I → BinRel Car ρ) → BinRel Car (ρ ⊔ i ⊔ s)
-  ⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
-
-  -- El goal 1 sale con la formalizacion de la proposicion 3.14
-  -- El goal 2 sale inmediatamente del goal 1
-  -- El goal 3 sale por el final de la prueba de la prop en papel
   NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ ρᵅ ⊔ ℓ} I (familyOfRels θ)) ≡ 0[ Car ] {ρ = ℓ ⊔ ρᵅ ⊔ i}
                  → IsSubEmb 𝐀 famOfCons  NatMap
   NatMapIsSubEmb p = record { Mon = {!!} ; genAlg≤Prod = {!!} ; IsSubdirProd = {!!} }
