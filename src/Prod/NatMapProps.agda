@@ -2,7 +2,8 @@ open import Overture using ( 𝓞 ; 𝓥 ; Signature ; ∣_∣)
 
 module Prod.NatMapProps {𝑆 : Signature 𝓞 𝓥} where
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_ ; cong-app)
+open Eq using (_≡_ ; cong-app) renaming (cong to Scong)
+open import Axiom.Extensionality.Propositional
 open import Level
 open import Data.Product
 open import Relation.Binary using (Setoid) renaming (Rel to BinRel)
@@ -61,6 +62,9 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
 
   kerOfFam : I → BinRel 𝕌[ 𝐁 ] α
   kerOfFam j = ker (<$> (proj₁ (family j)))
+
+  postulate
+    extensionality : Extensionality i α 
   
   {- A prod of homomorphisms h = ⨅ hᵢ, where ⟨ hᵢ : hom 𝐁 (𝓐 i) ⟩ is a family of homomorphisms,
   is such that h(b)(i) = hᵢ(b)
@@ -76,7 +80,10 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
   kerOfProd→⋂kers a b  a≈ₖb i = lift (cong-app a≈ₖb i)
 
   ⋂kers→kerOfProd : ∀ (a b : 𝕌[ 𝐁 ]) → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b → (ker (<$> (proj₁ IsProdOfHoms))) a b
-  ⋂kers→kerOfProd a b a≈⋂b = {!!} 
+  ⋂kers→kerOfProd a b a≈⋂b = extensionality {A = I} {B = λ j → 𝕌[ 𝓐 j ]} λ j → eq j (a≈⋂b j)
+    where
+      eq : (j : I) →  Lift (α ⊔ i ⊔ (i ⊔ α)) (kerOfFam j a b) → <$> (proj₁ IsProdOfHoms) a j ≡ <$> (proj₁ IsProdOfHoms) b j
+      eq j (lift p) = p
 
   postulate
     firstEquiv : famSeparatePoints 𝐁 𝓐 h → IsInjective (proj₁ IsProdOfHoms)
