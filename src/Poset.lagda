@@ -1,4 +1,4 @@
-\begin{code}[hide]
+\begin{code}
 
 module Poset where
 
@@ -59,7 +59,7 @@ Para ello, primero definiremos un \textit{record type} que nos asegure que dada,
 una relacion de equivalencia _≈_ , un orden parcial _≤_ y dos operaciones arbitrarias, ⋀_, ⋁_, satisfacen las condiciones para decir que ⟨A, _≤_⟩
 es un reticulado completo. Esto es que _≤_ sea un orden parcial (utilizando _≈_), que ⋀_ sea la operacion de infimo para cualquier subconjunto de A
 y ⋁_ sea la operacion de supremo tambien para todo subconjunto de A. 
-\begin{code}[hide]
+\begin{code}
 -- Complete Lattices
 {-
   A complete lattice is a partial ordered set in which all subsets have both supremum and infimum.
@@ -82,7 +82,8 @@ record IsCompleteLattice {a ℓ₁ ℓ₂ ℓ₃ ℓ₄} {A : Set a}
 open IsCompleteLattice public
 \end{code}
 
-  El proximo tipo es de reticulados completos en si, sus campos son el conjunto Carrier del reticulado, y tanto las relaciones binarias y operaciones que queremos que satisfagan las condiciones antes mencionadas.
+El proximo tipo es de reticulados completos en si, sus campos son el conjunto Carrier del reticulado,
+y tanto las relaciones binarias y operaciones que queremos que satisfagan las condiciones antes mencionadas.
 Sumamos tambien algunas propiedades sobre reticulados completos que nos seran utiles a futuro.
 Estas propiedades son:
 \begin{itemize}
@@ -155,7 +156,7 @@ El minimo, lo llamamos 0L, y su definicion es analoga.
   open CompleteLattice CL
 \end{code}
 
-\begin{code}[hide]
+\begin{code}
 -- Requisites for Zorn's Lemma
 --- Notion of Chain 
 {-
@@ -214,7 +215,7 @@ IsMaximal : ∀ {a ℓ₁ ℓ₂} {A : Set a} → Rel A ℓ₁ → Rel A ℓ₂ 
 IsMaximal _≈_ _≤_ x = ¬ (∃[ y ] (x ≤ y ×  ¬(x ≈ y)))
 \end{code}
 
-\begin{code}[hide]
+\begin{code}
 -- Zorn's Lemma
 {-
   Let 𝐏 be a nonempty Poset, Suppose that every chain in P has an upper bound.
