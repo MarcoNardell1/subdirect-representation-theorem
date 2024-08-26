@@ -10,10 +10,11 @@ open import Function.Construct.Composition using (function)
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Homomorphisms {𝑆 = 𝑆}
-open import Setoid.Functions  using (IsInjective)
+open import Setoid.Functions  using (IsInjective ; IsSurjective)
 open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.Subembedding
+open import Prod.Subdirect using (⨅-fun)
 open import Lattice using (absurd)
 
 private variable α β ρᵅ ρᵝ i : Level
@@ -142,6 +143,9 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
 
       ¬x≈y→¬kerhᵢ : {x y : Car} → ¬ (x ≈ y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
       ¬x≈y→¬kerhᵢ ¬x≈y = (¬∩ker→¬kerhᵢ (¬0→¬∩ker (¬x≈y→¬0 ¬x≈y)))
+
+  ∩⇔0→Inj : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → IsInjective (proj₁ IsProdOfHoms)
+  ∩⇔0→Inj ∩=0 = firstEquiv (thirdEquiv ∩=0)
             
 {-
 Proposition: Let 𝐀 an algebra and let θᵢ a congruence on 𝐀 for every i ∈ I.
@@ -155,16 +159,16 @@ prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
     family : I → Algebra α ℓ 
     family  i = 𝐀 ╱ (θ i)
 
-module _ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ}) where
+module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) where
   open Algebra 𝐀 renaming (Domain to A)
   open Setoid A renaming (Carrier to Car)
 
   -- A family of quotient algebras for the family of congruences ⟨θᵢ : i ∈ I ⟩
-  famOfCons : I → Algebra α ℓ
+  famOfCons : I → Algebra α ρᵅ
   famOfCons i = 𝐀 ╱ (θ i)
 
   -- defining the Algebra of direct product of the family of quotient algebras
-  prodOfQuot : Algebra (α ⊔ i) (i ⊔ ℓ)
+  prodOfQuot : Algebra (α ⊔ i) (i ⊔ ρᵅ)
   prodOfQuot = prodQuot {I = I} 𝐀 θ
 
   open Algebra prodOfQuot renaming (Domain to ⨅A/θ)
@@ -175,7 +179,7 @@ module _ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ})
   NatMap = record { f = λ x j → x ; cong = λ x=y j → IsCongruence.reflexive (proj₂ (θ j)) x=y }
 
   -- Given a family of congruences we take the binary relation of each congruence
-  familyOfRels : (I → Con 𝐀 {ℓ}) → I → BinRel Car ℓ
+  familyOfRels : (I → Con 𝐀 {ρᵅ}) → I → BinRel Car ρᵅ
   familyOfRels θ = λ i → proj₁ (θ i) 
 
   -- defining the family of homomorphisms ⟨hᵢ : 𝐀 → 𝐀／(θ i), ∀ i  ∈ I ⟩ 
@@ -194,17 +198,48 @@ module _ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ})
                                                    ; is-equivalence to equiv
                                                    )
           open IsEquivalence equiv renaming (refl to congrefl)
-          
+
+  open FamOfHoms natHomMap
+
   -- defining the product of the family of natural map homomorphisms
   prodOfNatHomMap : hom 𝐀 prodOfQuot
   prodOfNatHomMap = NatMap , record { compatible = λ j → IsHom.compatible (proj₂ (family j))}
+
+  -- note that hᵢ : 𝐀 → 𝐀／θᵢ is surjective for each i ∈ I 
+  hᵢIsSurj : ∀ (j : I) → IsSurjective (proj₁ (family j))
+  hᵢIsSurj j {y} = Setoid.Functions.eq y congrefl
     where
-      open FamOfHoms natHomMap
-      
+      open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equiv)
+      open IsEquivalence equiv renaming (refl to congrefl)
+
+  -- Let pᵢ : ⨅ 𝐀／θⱼ → 𝐀 ／ θᵢ the projection of the natural map.
+  -- now we want to prove that pᵢ ∘ h = hᵢ so pᵢ is surjective. 
+  
   -- First statement of proposition 
-  NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ ρᵅ ⊔ ℓ} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
+  NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfCons  NatMap
-  NatMapIsSubEmb p = record { Mon = monOfProd ; genAlg≤Prod = {!!} ; IsSubdirProd = {!!} }
+  NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
+                                            ; genAlg≤Prod = ( F , record { compatible = λ j →
+                                                                                      IsHom.compatible
+                                                                                        (proj₂ (family j))
+                                                                         }
+                                                            )
+                                                           , λ x j → x j
+                                            ; IsSubdirProd = λ j → {!!}
+                                            }
     where
       monOfProd : IsMon 𝐀 (⨅ famOfCons) NatMap
-      monOfProd = {!!}
+      monOfProd = record { isHom = proj₂ prodOfNatHomMap
+                         ; isInjective = ∩⇔0→Inj
+                                         𝐀
+                                         famOfCons
+                                         natHomMap
+                                         ((λ xθy → ∩θ⇒0A xθy) , 0⊆∩ 𝐀 famOfCons natHomMap)
+                         }
+
+
+      open IsMon monOfProd 
+      open Algebra (genAlgFromMon 𝐀 famOfCons (NatMap , monOfProd)) renaming (Domain to gA)
+
+      F : Func gA ⨅A/θ
+      F = record { f = λ x j → (proj₁ x) j ; cong = λ xθjy j → xθjy j }
