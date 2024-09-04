@@ -10,7 +10,7 @@ open import Function.Construct.Composition using (function)
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Homomorphisms {𝑆 = 𝑆}
-open import Setoid.Functions  using (IsInjective ; IsSurjective)
+open import Setoid.Functions  using (IsInjective ; IsSurjective ; ⊙-IsSurjective)
 open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.Subembedding
@@ -25,7 +25,7 @@ open Func renaming (f to <$>)
 postulate
   ¬∀→∃¬ : ∀ {a b} {A : Set a} {B : A → Set b} → ¬ (∀ (x : A) → (B x)) → Σ[ x ∈ A ] ¬ (B x) 
   ¬∃→∀¬ : ∀ {a b} {A : Set a} {B : A → Set b} → ¬ (Σ[ x ∈ A ]  (B x)) → ∀ (x : A) → ¬ (B x)
-  
+
 -- arbitray intersection
 
 ⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
@@ -213,8 +213,30 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
       open IsEquivalence equiv renaming (refl to congrefl)
 
   -- Let pᵢ : ⨅ 𝐀／θⱼ → 𝐀 ／ θᵢ the projection of the natural map.
-  -- now we want to prove that pᵢ ∘ h = hᵢ so pᵢ is surjective. 
+  -- now we want to prove that pᵢ ∘ h = hᵢ so pᵢ is surjective.
+  projOfProd : ( j : I ) → Func 𝔻[ 𝐀 ] 𝔻[ famOfCons j ]
+  projOfProd j = function  (proj₁ prodOfNatHomMap) (⨅-fun famOfCons j) 
+
+  pᵢ∘h≈hᵢ : (j : I) (x : 𝕌[ 𝐀 ]) → Set ρᵅ
+  pᵢ∘h≈hᵢ j x = (<$> (projOfProd j) x) ≈j (<$> (proj₁ (family j)) x)
+    where
+      open Algebra (famOfCons j) renaming (Domain to 𝓐j)
+      open Setoid 𝓐j renaming (_≈_ to _≈j_)  
   
+  -- Since hᵢ is surjective then pᵢ is surjective
+  pᵢIsSurj : ∀ (j : I) → IsSurjective (⨅-fun famOfCons j)
+  pᵢIsSurj j {y} = Setoid.Functions.eq (λ j → y) reflj
+    where
+      open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equivj)
+      open IsEquivalence equivj renaming (refl to reflj)
+  
+  eqOfIndexes : ∀ (j : I) (x : 𝕌[ 𝐀 ]) → pᵢ∘h≈hᵢ j x
+  eqOfIndexes j x = reflj
+    where
+      open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equivj)
+      open IsEquivalence equivj renaming (refl to reflj)
+  
+
   -- First statement of proposition 
   NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfCons  NatMap
@@ -225,7 +247,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
                                                                          }
                                                             )
                                                            , λ x j → x j
-                                            ; IsSubdirProd = λ j → {!!}
+                                            ; IsSubdirProd = λ j → ⊙-IsSurjective (FisSurj j) (pᵢIsSurj j) 
                                             }
     where
       monOfProd : IsMon 𝐀 (⨅ famOfCons) NatMap
@@ -243,3 +265,14 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
 
       F : Func gA ⨅A/θ
       F = record { f = λ x j → (proj₁ x) j ; cong = λ xθjy j → xθjy j }
+
+      FisSurj : (j : I) → IsSurjective F
+      FisSurj j {y} = Setoid.Functions.eq ( y
+                                          , y j
+                                          , λ k → {!!}
+                                          )
+                                          λ l →
+                                            IsEquivalence.refl
+                                              ( IsCongruence.is-equivalence
+                                                ( proj₂ (θ l) )
+                                               )
