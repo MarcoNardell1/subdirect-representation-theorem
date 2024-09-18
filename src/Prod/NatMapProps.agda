@@ -9,7 +9,8 @@ open import Function using (Func)
 open import Function.Construct.Composition using (function)
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
-open import Setoid.Homomorphisms {𝑆 = 𝑆}
+open import Setoid.Homomorphisms {𝑆 = 𝑆} hiding (_≅_ ; mkiso)
+open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆} using (_≅_ ; mkiso)
 open import Setoid.Functions  using (IsInjective ; IsSurjective ; ⊙-IsSurjective)
 open import Setoid.Relations using (0rel ; fker)
 
@@ -159,9 +160,10 @@ prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
     family : I → Algebra α ℓ 
     family  i = 𝐀 ╱ (θ i)
 
-module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) where
+module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (𝓑 : I → Algebra β ρᵝ) where
   open Algebra 𝐀 renaming (Domain to A)
   open Setoid A renaming (Carrier to Car)
+
 
   -- A family of quotient algebras for the family of congruences ⟨θᵢ : i ∈ I ⟩
   famOfCons : I → Algebra α ρᵅ
@@ -276,3 +278,19 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
                                               ( IsCongruence.is-equivalence
                                                 ( proj₂ (θ l) )
                                                )
+
+  -- last statement of proposition
+  subemb→quot≅Bᵢ : ∀ ( j : I ) (g : SubdirectEmbedding 𝐀 𝓑)
+                  → (familyOfRels θ j) ⇔ (fker (function (proj₁ g) (⨅-fun 𝓑 j)))
+                  → (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} × (famOfCons j) ≅ (𝓑 j)
+  subemb→quot≅Bᵢ j g (θ→ker , ker→θ) = ({!!} , {!!}) , mkiso {!!} {!!} {!!} {!!}
+    where
+      open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
+      pᵢBIsSurj : IsSurjective (⨅-fun 𝓑 j)
+      pᵢBIsSurj {y} = Setoid.Functions.eq {!!} {!!}
+      
+      pᵢ∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
+      pᵢ∘gIsSurj {y} = ⊙-IsSurjective {!!} pᵢBIsSurj
+      
+      kerg=∩θ : (fker (proj₁ g)) ⇔ (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ))
+      kerg=∩θ = {!!}
