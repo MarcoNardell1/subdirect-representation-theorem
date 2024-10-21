@@ -4,7 +4,7 @@ module Lattice where
 open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLattice)
 open import Relation.Binary         using (Rel ; IsPartialOrder)
 open import Level                   using (Level ; _⊔_ ; suc)
-open import Relation.Unary          using (Pred ; _⊆_ ; _∈_)
+open import Relation.Unary          using (Pred)
 open import Relation.Nullary        using (¬_)
 open import Data.Product
 open import Data.Sum

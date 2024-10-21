@@ -9,53 +9,15 @@ open import Function.Construct.Composition using (function)
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Functions using (IsBijective ; BijInv)
-open import Setoid.Homomorphisms {𝑆 = 𝑆} using (IsHom)
+open import Setoid.Homomorphisms {𝑆 = 𝑆} using (IsHom ; _≅_ ; hom ; mkiso)
 
 open import Prod.Subdirect
 open import Prod.Subembedding
+open import Isomorphisms.Isomorphisms
 
+open Func renaming (f to <$>)
 private variable α β ρᵅ ρᵝ i : Level
 
--- Defining Isomorphisms as a bijective homomorphism
-module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
-  open Algebra 𝐀 renaming (Domain to A)
-  open Algebra 𝐁 renaming (Domain to B)
-
-  record IsIso (h : Func A B) : Set (ov((α ⊔ ρᵅ ⊔ β ⊔ ρᵝ ⊔ ρᵝ))) where
-    field
-      Hom : IsHom 𝐀 𝐁 h
-      IsBij : IsBijective h
-      
-  Iso : Set ((ov((α ⊔ ρᵅ ⊔ β ⊔ ρᵝ ⊔ ρᵝ)))) 
-  Iso = Σ (Func A B) IsIso
-{-
-  Iso→≅ : (h : Iso) → 𝐀 ≅ 𝐁
-  Iso→≅ h = mkiso hom→ ←hom (λ b → {!!}) {!!}
-    where
-      open IsIso (proj₂ h)
-      open IsHom Hom
-      open Setoid A renaming (refl to refla; _≈_ to _≈ₐ_)
-      open Setoid B renaming (refl to reflb; _≈_ to _≈b_)
-
-      h⁻¹ : Func B A
-      h⁻¹ = BijInv (proj₁ h) IsBij
- 
-      hom→ : hom 𝐀 𝐁
-      hom→ = (proj₁ h) , Hom
-
-      ←hom : hom 𝐁 𝐀
-      ←hom = h⁻¹ , record { compatible = λ {f} {a} → {!!} } 
-     
-      eqb : ∀ (a : 𝕌[ 𝐀 ]) → <$> h⁻¹ (<$> (proj₁ h) a) ≈ₐ a
-      eqb a = {!!}
--}
-
-{-
-IsIso : (Hom A B) → Set
-IsIso h = Σ[ i ∈ Iso A B ] (ext-eq h (from i))
-  where ext-eq : (f g : Hom A B) → Set
-        ext-eq f g = (∀ a : D[ A ]) → f a ≈ g a
--}
 -- Definition of subdirectly irreducible
 {-
   A nontrivial algebra 𝐀 is called subdirectly irreducible

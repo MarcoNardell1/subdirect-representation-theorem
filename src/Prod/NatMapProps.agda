@@ -8,7 +8,8 @@ open import Relation.Nullary using (¬_)
 open import Function using (Func)
 open import Function.Construct.Composition using (function)
 
-open import Setoid.Algebras  {𝑆 = 𝑆}
+open import Setoid.Algebras  {𝑆 = 𝑆} hiding (mkcon)
+open import Setoid.Algebras.Congruences {𝑆 = 𝑆} using (mkcon)
 open import Setoid.Homomorphisms {𝑆 = 𝑆} hiding (_≅_ ; mkiso)
 open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆} using (_≅_ ; mkiso)
 open import Setoid.Functions  using (IsInjective ; IsSurjective ; ⊙-IsSurjective)
@@ -16,6 +17,7 @@ open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.Subembedding
 open import Prod.Subdirect using (⨅-fun)
+open import Isomorphisms.Isomorphisms using (Iso ; Iso→≅)
 open import Lattice using (absurd)
 
 private variable α β ρᵅ ρᵝ i : Level
@@ -160,14 +162,14 @@ prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
     family : I → Algebra α ℓ 
     family  i = 𝐀 ╱ (θ i)
 
-module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (𝓑 : I → Algebra β ρᵝ) where
+module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) where
   open Algebra 𝐀 renaming (Domain to A)
   open Setoid A renaming (Carrier to Car)
 
 
   -- A family of quotient algebras for the family of congruences ⟨θᵢ : i ∈ I ⟩
-  famOfCons : I → Algebra α ρᵅ
-  famOfCons i = 𝐀 ╱ (θ i)
+  famOfQuot : I → Algebra α ρᵅ
+  famOfQuot i = 𝐀 ╱ (θ i)
 
   -- defining the Algebra of direct product of the family of quotient algebras
   prodOfQuot : Algebra (α ⊔ i) (i ⊔ ρᵅ)
@@ -185,15 +187,15 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (�
   familyOfRels θ = λ i → proj₁ (θ i) 
 
   -- defining the family of homomorphisms ⟨hᵢ : 𝐀 → 𝐀／(θ i), ∀ i  ∈ I ⟩ 
-  natHomMap : FamOfHoms 𝐀 famOfCons
+  natHomMap : FamOfHoms 𝐀 famOfQuot
   natHomMap = record { family = λ j → (fam j) , isHomFam j }
     where
-      fam : (j : I) → Func A (𝔻[ famOfCons j ])
+      fam : (j : I) → Func A (𝔻[ famOfQuot j ])
       fam j = record { f = λ x → x ; cong = crefl}
         where
           open IsCongruence (proj₂ (θ j)) renaming (reflexive to crefl)
 
-      isHomFam : (j : I) → IsHom 𝐀 (famOfCons j) (fam j) 
+      isHomFam : (j : I) → IsHom 𝐀 (famOfQuot j) (fam j) 
       isHomFam j = record { compatible = λ {f} {a} → comp f λ x → congrefl}
         where
           open IsCongruence (proj₂ (θ j)) renaming ( is-compatible to comp
@@ -216,17 +218,17 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (�
 
   -- Let pᵢ : ⨅ 𝐀／θⱼ → 𝐀 ／ θᵢ the projection of the natural map.
   -- now we want to prove that pᵢ ∘ h = hᵢ so pᵢ is surjective.
-  projOfProd : ( j : I ) → Func 𝔻[ 𝐀 ] 𝔻[ famOfCons j ]
-  projOfProd j = function  (proj₁ prodOfNatHomMap) (⨅-fun famOfCons j) 
+  projOfProd : ( j : I ) → Func 𝔻[ 𝐀 ] 𝔻[ famOfQuot j ]
+  projOfProd j = function  (proj₁ prodOfNatHomMap) (⨅-fun famOfQuot j) 
 
   pᵢ∘h≈hᵢ : (j : I) (x : 𝕌[ 𝐀 ]) → Set ρᵅ
   pᵢ∘h≈hᵢ j x = (<$> (projOfProd j) x) ≈j (<$> (proj₁ (family j)) x)
     where
-      open Algebra (famOfCons j) renaming (Domain to 𝓐j)
+      open Algebra (famOfQuot j) renaming (Domain to 𝓐j)
       open Setoid 𝓐j renaming (_≈_ to _≈j_)  
   
   -- Since hᵢ is surjective then pᵢ is surjective
-  pᵢIsSurj : ∀ (j : I) → IsSurjective (⨅-fun famOfCons j)
+  pᵢIsSurj : ∀ (j : I) → IsSurjective (⨅-fun famOfQuot j)
   pᵢIsSurj j {y} = Setoid.Functions.eq (λ j → y) reflj
     where
       open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equivj)
@@ -241,7 +243,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (�
 
   -- First statement of proposition 
   NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
-                 → IsSubEmb 𝐀 famOfCons  NatMap
+                 → IsSubEmb 𝐀 famOfQuot  NatMap
   NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
                                             ; genAlg≤Prod = ( F , record { compatible = λ j →
                                                                                       IsHom.compatible
@@ -249,48 +251,115 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) (�
                                                                          }
                                                             )
                                                            , λ x j → x j
-                                            ; IsSubdirProd = λ j → ⊙-IsSurjective (FisSurj j) (pᵢIsSurj j) 
+                                            ; IsSubdirProd = λ j {a} → Setoid.Functions.eq ((λ k → a) , a , λ l → IsEquivalence.refl
+                                              ( IsCongruence.is-equivalence
+                                                ( proj₂ (θ l) ))) (IsEquivalence.refl
+                                              ( IsCongruence.is-equivalence
+                                                ( proj₂ (θ j)) )) --  ⊙-IsSurjective (FisSurj j) (pᵢIsSurj j) 
                                             }
     where
-      monOfProd : IsMon 𝐀 (⨅ famOfCons) NatMap
+      monOfProd : IsMon 𝐀 (⨅ famOfQuot) NatMap
       monOfProd = record { isHom = proj₂ prodOfNatHomMap
                          ; isInjective = ∩⇔0→Inj
                                          𝐀
-                                         famOfCons
+                                         famOfQuot
                                          natHomMap
-                                         ((λ xθy → ∩θ⇒0A xθy) , 0⊆∩ 𝐀 famOfCons natHomMap)
+                                         ((λ xθy → ∩θ⇒0A xθy) , 0⊆∩ 𝐀 famOfQuot natHomMap)
                          }
 
 
       open IsMon monOfProd 
-      open Algebra (genAlgFromMon 𝐀 famOfCons (NatMap , monOfProd)) renaming (Domain to gA)
+      open Algebra (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd)) renaming (Domain to gA)
 
       F : Func gA ⨅A/θ
-      F = record { f = λ x j → (proj₁ x) j ; cong = λ xθjy j → xθjy j }
-
+      F = record { f = λ {(f , p) j →  (<$> NatMap) (f j) j{- (proj₁ x) j -} }; cong = λ xθjy j → xθjy j}
+{-
       FisSurj : (j : I) → IsSurjective F
-      FisSurj j {y} = Setoid.Functions.eq ( y
+      FisSurj j {y} = Setoid.Functions.eq  ((<$> NatMap) (y j) , (<$> NatMap) (y j) j , λ k → IsEquivalence.refl ( IsCongruence.is-equivalence
+                                                ( proj₂ (θ k) ))
+                                            ) {-( y
                                           , y j
                                           , λ k → {!!}
-                                          )
-                                          λ l →
+                                          )-}
+                                          {!!} 
+                                          {-λ l →
                                             IsEquivalence.refl
                                               ( IsCongruence.is-equivalence
                                                 ( proj₂ (θ l) )
-                                               )
-
+                                               )-}
+-}
   -- last statement of proposition
-  subemb→quot≅Bᵢ : ∀ ( j : I ) (g : SubdirectEmbedding 𝐀 𝓑)
+
+{-
+g : A → Π Bᵢ es un sub embedding
+Entonces dir(g(A)) es un prod subdirecto de Bᵢ, dir(g(A)) es una subalgebra de Π Bᵢ
+y para j ∈ I, pⱼ|dir(g(A)) : dir(g(A)) → Bⱼ es surjectivo.
+
+Entonces i ∈ I y sea b ∈ Bᵢ, queremos dar [a] ∈ A／θᵢ.
+Como pᵢ|dir(g(A)) es surjectivo, existe x ∈ dir(g(A)) tal que pᵢ|dir(g(A)) (x) = b.
+
+Como x ∈ dir(g(A)) es una tupla < xⱼ : j ∈ I > tal que existe a ∈ A con <xⱼ : j ∈ I> = a.
+
+Entonces definimos H : Bᵢ → A／θᵢ como
+
+H(b) = a dado por "elegir a los a ∈ A tales que g(a) = x ∧ pᵢ|dir(g(A)) (x) = b"
+-}
+  
+module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (g : SubdirectEmbedding 𝐀 𝓑) where
+  open Algebra 𝐀 renaming (Domain to A)
+  open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equivA)
+  open IsEquivalence equivA renaming (refl to reflA)
+
+  open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
+  open Func (proj₁ g) renaming (cong to gcong)
+
+  dirProd : Algebra (β ⊔ i) (ρᵝ ⊔ i)
+  dirProd = ⨅ 𝓑
+
+  open Algebra dirProd renaming (Domain to ⨅B)
+  
+  θᵢ : (j : I) → BinRel Car ρᵝ
+  θᵢ j = fker (function (proj₁ g) (⨅-fun 𝓑 j))
+
+  famOfCong : ∀ (j : I) → Con 𝐀 {ℓ = ρᵝ}
+  famOfCong j = θᵢ j , mkcon reflθ (equivθ j) λ 𝑓 x → {!!}
+    where
+      reflθ : {a b : Car} → a ≈a b → θᵢ j a b
+      reflθ {a} {b} a≈b = gcong {a} {b} a≈b j
+
+      equivθ : ∀ (j : I) → IsEquivalence (θᵢ j)
+      equivθ j = record { refl =  reflB ; sym = symB ; trans = transB }
+        where
+          open Algebra (𝓑 j) renaming (Domain to Bj)
+          open Setoid Bj renaming (isEquivalence to equivB)
+          open IsEquivalence equivB renaming (refl to reflB ; sym to symB; trans to transB)
+
+  famOfQuot₂ : ∀ (j : I) → Algebra α ρᵝ
+  famOfQuot₂ j = 𝐀 ╱ famOfCong j 
+
+  subemb→quot≅Bᵢ : ∀ (j : I)
+                 → (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
+                   × (famOfQuot₂ j) ≅ (𝓑 j)
+  subemb→quot≅Bᵢ j = {!!}
+    where
+      gIsSurj : IsSurjective (proj₁ g)
+      gIsSurj {y} = Setoid.Functions.eq {!!} {!!}
+      
+      pi∘gIsSurj : ∀ (k : I) → IsSurjective (function (proj₁ g) (⨅-fun 𝓑 k))
+      pi∘gIsSurj k {y} = {!!}
+    
+{- subemb→quot≅Bᵢ : ∀ ( j : I ) (g : SubdirectEmbedding 𝐀 𝓑)
                   → (familyOfRels θ j) ⇔ (fker (function (proj₁ g) (⨅-fun 𝓑 j)))
-                  → (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} × (famOfCons j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j g (θ→ker , ker→θ) = ({!!} , {!!}) , mkiso {!!} {!!} {!!} {!!}
+                  → (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} × (famOfQuot j) ≅ (𝓑 j)
+  subemb→quot≅Bᵢ j g (θ→ker , ker→θ) = ({!!} , {!!}) , Iso→≅ (famOfQuot j) (𝓑 j) {!!} -- mkiso {!!} {!!} {!!} {!!}
     where
       open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
-      pᵢBIsSurj : IsSurjective (⨅-fun 𝓑 j)
-      pᵢBIsSurj {y} = Setoid.Functions.eq {!!} {!!}
+      pᵢBIsSurj : ∀ (k : I) → IsSurjective (⨅-fun 𝓑 k)
+      pᵢBIsSurj k {y} = {!!}
       
       pᵢ∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
-      pᵢ∘gIsSurj {y} = ⊙-IsSurjective {!!} pᵢBIsSurj
+      pᵢ∘gIsSurj {y} = {!!}
       
       kerg=∩θ : (fker (proj₁ g)) ⇔ (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ))
       kerg=∩θ = {!!}
+-}

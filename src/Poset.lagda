@@ -5,7 +5,7 @@ module Poset where
 -- Standard library imports
 open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
-open import Relation.Unary          using (Pred ; _∈_ ; U)
+open import Relation.Unary          using (Pred)
 open import Relation.Nullary        using (¬_)
 open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂)
 open import Data.Unit.Polymorphic   using (⊤)
