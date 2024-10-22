@@ -8,6 +8,9 @@ open import Relation.Nullary using (¬_)
 open import Function using (Func)
 open import Function.Construct.Composition using (function)
 
+open import Relation.Binary.PropositionalEquality as ≡ using ()
+
+
 open import Setoid.Algebras  {𝑆 = 𝑆} hiding (mkcon)
 open import Setoid.Algebras.Congruences {𝑆 = 𝑆} using (mkcon)
 open import Setoid.Homomorphisms {𝑆 = 𝑆} hiding (_≅_ ; mkiso)
@@ -306,47 +309,73 @@ H(b) = a dado por "elegir a los a ∈ A tales que g(a) = x ∧ pᵢ|dir(g(A)) (x
 -}
   
 module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (g : SubdirectEmbedding 𝐀 𝓑) where
-  open Algebra 𝐀 renaming (Domain to A)
+  open Algebra 𝐀 renaming (Domain to A ; Interp to AInterp)
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equivA)
   open IsEquivalence equivA renaming (refl to reflA)
 
   open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
   open Func (proj₁ g) renaming (cong to gcong)
 
+  open IsMon Mon renaming (isInjective to injg ; isHom to gHom)
+  open IsHom gHom renaming (compatible to gCompatible)
+  
   dirProd : Algebra (β ⊔ i) (ρᵝ ⊔ i)
   dirProd = ⨅ 𝓑
 
-  open Algebra dirProd renaming (Domain to ⨅B)
+  open Algebra dirProd renaming (Domain to ⨅B ; Interp to ⨅BInterp)
   
   θᵢ : (j : I) → BinRel Car ρᵝ
   θᵢ j = fker (function (proj₁ g) (⨅-fun 𝓑 j))
 
   famOfCong : ∀ (j : I) → Con 𝐀 {ℓ = ρᵝ}
-  famOfCong j = θᵢ j , mkcon reflθ (equivθ j) λ 𝑓 x → {!!}
+  famOfCong j = θᵢ j , mkcon reflθ equivθ θⱼComp
     where
+      open Algebra (𝓑 j) renaming (Domain to Bj ; Interp to BjInterp)
+      open Setoid Bj renaming (isEquivalence to equivBj ; _≈_ to _≈bj_)
+      open IsEquivalence equivBj renaming (refl to reflBj ; sym to symBj ; trans to transBj)
+
       reflθ : {a b : Car} → a ≈a b → θᵢ j a b
       reflθ {a} {b} a≈b = gcong {a} {b} a≈b j
 
-      equivθ : ∀ (j : I) → IsEquivalence (θᵢ j)
-      equivθ j = record { refl =  reflB ; sym = symB ; trans = transB }
-        where
-          open Algebra (𝓑 j) renaming (Domain to Bj)
-          open Setoid Bj renaming (isEquivalence to equivB)
-          open IsEquivalence equivB renaming (refl to reflB ; sym to symB; trans to transB)
+      equivθ :  IsEquivalence (θᵢ j)
+      equivθ  = record { refl =  reflBj ; sym = symBj ; trans = transBj }
 
+      θⱼComp : 𝐀 ∣≈ θᵢ j
+      θⱼComp 𝑓 {x} {y} xθⱼy = transBj cong3dStep cong4thStep
+        where
+          cong1stStep : f (<$> AInterp (𝑓 , x)) j ≈bj
+                        <$> BjInterp (𝑓 , λ a → f (x a) j) 
+          cong1stStep = gCompatible j
+
+          cong2ndStep : <$> BjInterp (𝑓 , λ a → f (x a) j) ≈bj
+                        <$> BjInterp (𝑓 , λ a → f (y a) j)
+          cong2ndStep = cong BjInterp (≡.refl , xθⱼy)
+
+          cong3dStep : f (<$> AInterp (𝑓 , x)) j ≈bj
+                       <$> BjInterp (𝑓 , λ a → f (y a) j)
+          cong3dStep = transBj cong1stStep cong2ndStep
+
+          cong4thStep : <$> BjInterp (𝑓 , λ a → f (y a) j) ≈bj
+                        f (<$> AInterp (𝑓 , y)) j
+          cong4thStep = symBj (gCompatible j) 
+                        
+      
   famOfQuot₂ : ∀ (j : I) → Algebra α ρᵝ
   famOfQuot₂ j = 𝐀 ╱ famOfCong j 
 
   subemb→quot≅Bᵢ : ∀ (j : I)
                  → (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
                    × (famOfQuot₂ j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j = {!!}
+  subemb→quot≅Bᵢ j = ({!!} , {!!}) , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
     where
       gIsSurj : IsSurjective (proj₁ g)
       gIsSurj {y} = Setoid.Functions.eq {!!} {!!}
       
       pi∘gIsSurj : ∀ (k : I) → IsSurjective (function (proj₁ g) (⨅-fun 𝓑 k))
       pi∘gIsSurj k {y} = {!!}
+
+      quotIso : Iso (famOfQuot₂ j) (𝓑 j)
+      quotIso = {!!}
     
 {- subemb→quot≅Bᵢ : ∀ ( j : I ) (g : SubdirectEmbedding 𝐀 𝓑)
                   → (familyOfRels θ j) ⇔ (fker (function (proj₁ g) (⨅-fun 𝓑 j)))
