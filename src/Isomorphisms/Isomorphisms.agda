@@ -5,6 +5,7 @@ open import Level
 open import Data.Product
 open import Relation.Binary using (Setoid)
 open import Relation.Binary.PropositionalEquality  as ≡           using ()
+import Relation.Binary.Reasoning.Setoid            as SReasoning  using ( begin_ ; step-≈˘; step-≈; _∎)
 
 open import Function using (Func)
 
@@ -38,9 +39,23 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
     where
       open IsIso (proj₂ h)
       open IsHom Hom renaming (compatible to hcom)
-      open Setoid A renaming (refl to refla; _≈_ to _≈ₐ_ ; sym to syma ; trans to transa)
-      open Setoid B renaming (refl to reflb; _≈_ to _≈b_ ; sym to symb ; trans to transb)
-    
+      open Setoid A renaming (refl to Arefl
+                             ; _≈_ to _≈ₐ_
+                             ; sym to Asym
+                             ; trans to Atrans
+                             )
+      open Setoid B renaming (refl to Brefl
+                             ; _≈_ to _≈b_
+                             ; sym to Bsym
+                             ; trans to Btrans
+                             )
+
+      open SReasoning B renaming (begin_ to Bbegin_
+                                 ; step-≈˘ to Bstep-≈˘
+                                 ; step-≈ to Bstep-≈
+                                 ; _∎ to _∎b
+                                 )
+
       h⁻¹ : Func B A
       h⁻¹ = BijInv (proj₁ h) IsBij
 
@@ -56,45 +71,29 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
       eqa : ∀ (a : 𝕌[ 𝐀 ]) → <$> h⁻¹ (<$> (proj₁ h) a) ≈ₐ a
       eqa a = proj₁ IsBij (eqb (<$> (proj₁ h) a))
 
-      eqATrans : ∀ {x y : 𝕌[ 𝐀 ]}
-               → x ≈ₐ y
-               → <$> h⁻¹ (<$> (proj₁ h) x) ≈ₐ <$> h⁻¹ (<$> (proj₁ h) y)
-      eqATrans {x} {y} xy = transa (eqa x) (transa xy (syma (eqa y)))
-      
 
-      eqBTrans : ∀ {x y : 𝕌[ 𝐁 ]}
-               → x ≈b y
-               → <$> (proj₁ h) (<$> h⁻¹ x) ≈b <$> (proj₁ h) (<$> h⁻¹ y)
-      eqBTrans {x} {y} xy = transb (eqb x) (transb xy (symb (eqb y)))
-      
       ←hom : hom 𝐁 𝐀
       ←hom = h⁻¹ , record { compatible = invIsCompatible }
         where
           invIsCompatible : compatible-map 𝐁 𝐀 h⁻¹
-          invIsCompatible {f} {a} = syma final 
+          invIsCompatible {f} {a} = Asym final 
             where
             {- Gracias Andres-}
-              firstEquiv : <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈b
-                           ((f ̂ 𝐁) (λ x → <$> (proj₁ h) (<$> h⁻¹ (a x))))
-              firstEquiv = hcom
-
-              secondEquiv : ((f ̂ 𝐁) (λ x → <$> (proj₁ h) (<$> h⁻¹ (a x)))) ≈b
-                            (f ̂ 𝐁) (λ x → a x)
-              secondEquiv = cong BInterp (≡.refl , λ i → eqb (a i)) 
-
-              thirdEquiv : <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈b
+              BAux : <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈b
                            (f ̂ 𝐁) (λ x → a x)
 
-              thirdEquiv = transb firstEquiv secondEquiv
+              BAux =  Bbegin
+                <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈⟨ hcom  ⟩
+                (f ̂ 𝐁) (λ x → <$> (proj₁ h) (<$> h⁻¹ (a x))) ≈⟨ cong BInterp (≡.refl , λ i → eqb (a i)) ⟩
+                (f ̂ 𝐁) (λ x → a x) ∎b 
               
-              fourthEquiv : <$> h⁻¹ (<$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))) ≈ₐ
+              invApply : <$> h⁻¹ (<$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))) ≈ₐ
                            <$> h⁻¹ ((f ̂ 𝐁) (λ x → a x))
-              fourthEquiv = invCong thirdEquiv
-
+              invApply = invCong BAux
 
               final : (f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)) ≈ₐ
                       <$> h⁻¹ ((f ̂ 𝐁) (λ x → a x))
-              final = syma (transa (syma fourthEquiv) eqRed)
+              final = Asym (Atrans (Asym invApply) eqRed)
                 where
                   eqRed : <$> h⁻¹ (<$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))) ≈ₐ
                         ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))
