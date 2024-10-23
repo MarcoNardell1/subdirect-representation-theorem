@@ -331,9 +331,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
   subemb→quot≅Bᵢ : ∀ (j : I)
                  → (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
                    × (famOfQuot₂ j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j = ((λ x → lift (injg (proj₂ kerg≈∩θ x)))
-                     , λ x k → proj₁ kerg≈∩θ (λ l → gcong (lower x) l) k
-                     )
+  subemb→quot≅Bᵢ j = (∩θᵢ⇒0 , 0⇒∩θᵢ)
                    , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
     where
       open Algebra (𝓑 j) renaming (Domain to Bj)
@@ -342,23 +340,21 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       open Image_∋_
       -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ 
       pi∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
-      pi∘gIsSurj {y} = eq (ga≈bᵢ→a (subp j {y})) (y≈pᵢga (subp j {y}))
-        where
-         ga≈bᵢ→a : Image function (proj₁ (proj₁ genAlg≤Prod)) (⨅-fun 𝓑 j) ∋ y → Car
-         ga≈bᵢ→a (eq a _) = proj₁ (proj₂ a)
-
-         y≈pᵢga : Image function (proj₁ (proj₁ genAlg≤Prod)) (⨅-fun 𝓑 j) ∋ y
-                → y ≈bj f (ga≈bᵢ→a (subp j {y})) j
-         y≈pᵢga (eq a x) = bjtrans x aux
-           where
-             aux : <$> (proj₁ (proj₁ genAlg≤Prod)) a j ≈bj f (ga≈bᵢ→a (subp j)) j
-             aux = {!!}
+      pi∘gIsSurj {y} with subp j {y}
+      ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a {!!}
 
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
-      quotIso = {!!} , record { Hom = {!!} ; IsBij = {!!} }
+      quotIso = F , record { Hom = {!!} ; IsBij = {!!} }
+        where
+          F : Func 𝔻[ (famOfQuot₂ j) ] Bj
+          F = {!!}
     
       -- Proving that ∩θ = 0A
       kerg≈∩θ : fker (proj₁ g) ⇔  ⋂ᵣ {s = α ⊔ i} I θᵢ
       kerg≈∩θ = (λ x k → lift (x k)) , λ x k → lower (x k)
          
-      
+      ∩θᵢ⇒0 : ⋂ᵣ {s = α ⊔ i} I θᵢ ⇒ 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
+      ∩θᵢ⇒0 pᵢgx≈pigy = lift (injg (proj₂ kerg≈∩θ pᵢgx≈pigy)) 
+
+      0⇒∩θᵢ : 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = α ⊔ i} I θᵢ
+      0⇒∩θᵢ x≈y k = proj₁ kerg≈∩θ (λ l → gcong (lower x≈y) l) k
