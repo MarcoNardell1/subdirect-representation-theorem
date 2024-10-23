@@ -26,19 +26,13 @@ open import Setoid.Relations using (0rel ; fker)
 open import Prod.Subembedding
 open import Prod.Subdirect using (⨅-fun)
 open import Isomorphisms.Isomorphisms using (Iso ; Iso→≅)
-open import Lattice using (absurd)
+open import Utils.Axioms using (absurd ; ¬∀→∃¬)
 
 private variable α β ρᵅ ρᵝ i : Level
 
 open Func renaming (f to <$>) 
 
--- postulating axioms of negation and quantifiers
-postulate
-  ¬∀→∃¬ : ∀ {a b} {A : Set a} {B : A → Set b} → ¬ (∀ (x : A) → (B x)) → Σ[ x ∈ A ] ¬ (B x) 
-  ¬∃→∀¬ : ∀ {a b} {A : Set a} {B : A → Set b} → ¬ (Σ[ x ∈ A ]  (B x)) → ∀ (x : A) → ¬ (B x)
-
 -- arbitray intersection
-
 ⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
 ⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
 

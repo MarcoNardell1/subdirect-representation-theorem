@@ -14,7 +14,8 @@ open import Agda.Builtin.Unit       using (tt)
 open import Algebra.Core            using (Op₂)
 
 -- Local imports
-open import Poset                         
+open import Poset
+open import Utils.Axioms using (absurd)
 
 {-
   Lemma: 
@@ -147,8 +148,6 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
   The element a is completely meet-irreducible if a ≠ 1_𝐋 and whenever a = ⋀_{i ∈ I} bᵢ,
   there is a j ∈ I such that a = bⱼ.  
 -}
-postulate
-  absurd : ∀ {ℓ} (P : Set ℓ) → ¬ (¬ P) → P
 
 module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ ℓ₁} where
   open CompleteLattice CL
