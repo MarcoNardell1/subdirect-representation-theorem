@@ -16,7 +16,11 @@ open import Setoid.Algebras  {𝑆 = 𝑆} hiding (mkcon)
 open import Setoid.Algebras.Congruences {𝑆 = 𝑆} using (mkcon)
 open import Setoid.Homomorphisms {𝑆 = 𝑆} hiding (_≅_ ; mkiso)
 open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆} using (_≅_ ; mkiso)
-open import Setoid.Functions  using (IsInjective ; IsSurjective ; ⊙-IsSurjective)
+open import Setoid.Functions  using (IsInjective
+                                    ; IsSurjective
+                                    ; Image_∋_
+                                    ; Dom
+                                    )
 open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.Subembedding
@@ -276,39 +280,9 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
       open Algebra (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd)) renaming (Domain to gA)
 
       F : Func gA ⨅A/θ
-      F = record { f = λ {(f , p) j →  (<$> NatMap) (f j) j{- (proj₁ x) j -} }; cong = λ xθjy j → xθjy j}
-{-
-      FisSurj : (j : I) → IsSurjective F
-      FisSurj j {y} = Setoid.Functions.eq  ((<$> NatMap) (y j) , (<$> NatMap) (y j) j , λ k → IsEquivalence.refl ( IsCongruence.is-equivalence
-                                                ( proj₂ (θ k) ))
-                                            ) {-( y
-                                          , y j
-                                          , λ k → {!!}
-                                          )-}
-                                          {!!} 
-                                          {-λ l →
-                                            IsEquivalence.refl
-                                              ( IsCongruence.is-equivalence
-                                                ( proj₂ (θ l) )
-                                               )-}
--}
-  -- last statement of proposition
+      F = record { f = λ {(f , p) j →  (<$> NatMap) (f j) j}; cong = λ xθjy j → xθjy j}
 
-{-
-g : A → Π Bᵢ es un sub embedding
-Entonces dir(g(A)) es un prod subdirecto de Bᵢ, dir(g(A)) es una subalgebra de Π Bᵢ
-y para j ∈ I, pⱼ|dir(g(A)) : dir(g(A)) → Bⱼ es surjectivo.
-
-Entonces i ∈ I y sea b ∈ Bᵢ, queremos dar [a] ∈ A／θᵢ.
-Como pᵢ|dir(g(A)) es surjectivo, existe x ∈ dir(g(A)) tal que pᵢ|dir(g(A)) (x) = b.
-
-Como x ∈ dir(g(A)) es una tupla < xⱼ : j ∈ I > tal que existe a ∈ A con <xⱼ : j ∈ I> = a.
-
-Entonces definimos H : Bᵢ → A／θᵢ como
-
-H(b) = a dado por "elegir a los a ∈ A tales que g(a) = x ∧ pᵢ|dir(g(A)) (x) = b"
--}
-  
+-- last statement of proposition
 module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (g : SubdirectEmbedding 𝐀 𝓑) where
   open Algebra 𝐀 renaming (Domain to A ; Interp to AInterp)
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equivA)
@@ -323,6 +297,12 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
   dirProd : Algebra (β ⊔ i) (ρᵝ ⊔ i)
   dirProd = ⨅ 𝓑
 
+  genFromSubEmb : Algebra (α ⊔ (β ⊔ i) ⊔ (ρᵝ ⊔ i)) (ρᵝ ⊔ i)
+  genFromSubEmb = genAlgFromMon 𝐀 𝓑 (((proj₁ g) , Mon))
+
+  open Algebra genFromSubEmb renaming (Domain to gA)
+  open Setoid gA renaming (Carrier to gACar)
+  
   open Algebra dirProd renaming (Domain to ⨅B ; Interp to ⨅BInterp)
   
   θᵢ : (j : I) → BinRel Car ρᵝ
@@ -357,12 +337,34 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
   subemb→quot≅Bᵢ : ∀ (j : I)
                  → (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
                    × (famOfQuot₂ j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j = ({!!} , {!!}) , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
+  subemb→quot≅Bᵢ j = ((λ x → lift (injg (proj₂ kerg≈∩θ x)))
+                     , λ x k → proj₁ kerg≈∩θ (λ l → gcong (lower x) l) k
+                     )
+                   , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
     where
- 
+      open Algebra (𝓑 j) renaming (Domain to Bj)
+      open Setoid Bj renaming (_≈_ to _≈bj_ ; sym to bjsym ; trans to bjtrans)
+
+      open Image_∋_
+      -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ 
       pi∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
-      pi∘gIsSurj = {!!}
+      pi∘gIsSurj {y} = eq (ga≈bᵢ→a (subp j {y})) (y≈pᵢga (subp j {y}))
+        where
+         ga≈bᵢ→a : Image function (proj₁ (proj₁ genAlg≤Prod)) (⨅-fun 𝓑 j) ∋ y → Car
+         ga≈bᵢ→a (eq a _) = proj₁ (proj₂ a)
+
+         y≈pᵢga : Image function (proj₁ (proj₁ genAlg≤Prod)) (⨅-fun 𝓑 j) ∋ y
+                → y ≈bj f (ga≈bᵢ→a (subp j {y})) j
+         y≈pᵢga (eq a x) = bjtrans x aux
+           where
+             aux : <$> (proj₁ (proj₁ genAlg≤Prod)) a j ≈bj f (ga≈bᵢ→a (subp j)) j
+             aux = {!!}
 
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
       quotIso = {!!} , record { Hom = {!!} ; IsBij = {!!} }
     
+      -- Proving that ∩θ = 0A
+      kerg≈∩θ : fker (proj₁ g) ⇔  ⋂ᵣ {s = α ⊔ i} I θᵢ
+      kerg≈∩θ = (λ x k → lift (x k)) , λ x k → lower (x k)
+         
+      

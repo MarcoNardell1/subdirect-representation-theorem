@@ -81,7 +81,6 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
             {- Gracias Andres-}
               BAux : <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈b
                            (f ̂ 𝐁) (λ x → a x)
-
               BAux =  Bbegin
                 <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈⟨ hcom  ⟩
                 (f ̂ 𝐁) (λ x → <$> (proj₁ h) (<$> h⁻¹ (a x))) ≈⟨ cong BInterp (≡.refl , λ i → eqb (a i)) ⟩
