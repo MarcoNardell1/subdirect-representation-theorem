@@ -31,7 +31,7 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
      field
        Mon : IsMon 𝐁 (⨅ 𝓐) h
        genAlg≤Prod : (genAlgFromMon (h , Mon)) ≤ (⨅ 𝓐) 
-       IsSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon)) 𝓐 genAlg≤Prod
+       isSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon)) 𝓐 genAlg≤Prod
      
    SubdirectEmbedding : Set ((ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ)))
    SubdirectEmbedding = Σ (Func B A) IsSubEmb

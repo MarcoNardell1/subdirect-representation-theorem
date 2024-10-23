@@ -9,6 +9,7 @@ open import Function using (Func)
 open import Function.Construct.Composition using (function)
 
 open import Relation.Binary.PropositionalEquality as ≡ using ()
+import Relation.Binary.Reasoning.Setoid            as SReasoning  using ( begin_ ; step-≈˘; step-≈; _∎)
 
 
 open import Setoid.Algebras  {𝑆 = 𝑆} hiding (mkcon)
@@ -254,7 +255,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
                                                                          }
                                                             )
                                                            , λ x j → x j
-                                            ; IsSubdirProd = λ j {a} → Setoid.Functions.eq ((λ k → a) , a , λ l → IsEquivalence.refl
+                                            ; isSubdirProd = λ j {a} → Setoid.Functions.eq ((λ k → a) , a , λ l → IsEquivalence.refl
                                               ( IsCongruence.is-equivalence
                                                 ( proj₂ (θ l) ))) (IsEquivalence.refl
                                               ( IsCongruence.is-equivalence
@@ -313,7 +314,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equivA)
   open IsEquivalence equivA renaming (refl to reflA)
 
-  open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
+  open IsSubEmb (proj₂ g) renaming (isSubdirProd to subp)
   open Func (proj₁ g) renaming (cong to gcong)
 
   open IsMon Mon renaming (isInjective to injg ; isHom to gHom)
@@ -341,24 +342,14 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       equivθ  = record { refl =  reflBj ; sym = symBj ; trans = transBj }
 
       θⱼComp : 𝐀 ∣≈ θᵢ j
-      θⱼComp 𝑓 {x} {y} xθⱼy = transBj cong3dStep cong4thStep
+      θⱼComp 𝑓 {x} {y} xθⱼy = begin
+        f (<$> AInterp (𝑓 , x)) j ≈⟨ gCompatible j ⟩
+        <$> BjInterp (𝑓 , λ a → f (x a) j) ≈⟨ cong BjInterp (≡.refl , xθⱼy) ⟩
+        <$> BjInterp (𝑓 , λ a → f (y a) j) ≈⟨ symBj (gCompatible j) ⟩
+        f (<$> AInterp (𝑓 , y)) j
+        ∎
         where
-          cong1stStep : f (<$> AInterp (𝑓 , x)) j ≈bj
-                        <$> BjInterp (𝑓 , λ a → f (x a) j) 
-          cong1stStep = gCompatible j
-
-          cong2ndStep : <$> BjInterp (𝑓 , λ a → f (x a) j) ≈bj
-                        <$> BjInterp (𝑓 , λ a → f (y a) j)
-          cong2ndStep = cong BjInterp (≡.refl , xθⱼy)
-
-          cong3dStep : f (<$> AInterp (𝑓 , x)) j ≈bj
-                       <$> BjInterp (𝑓 , λ a → f (y a) j)
-          cong3dStep = transBj cong1stStep cong2ndStep
-
-          cong4thStep : <$> BjInterp (𝑓 , λ a → f (y a) j) ≈bj
-                        f (<$> AInterp (𝑓 , y)) j
-          cong4thStep = symBj (gCompatible j) 
-                        
+          open SReasoning Bj              
       
   famOfQuot₂ : ∀ (j : I) → Algebra α ρᵝ
   famOfQuot₂ j = 𝐀 ╱ famOfCong j 
@@ -368,27 +359,10 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
                    × (famOfQuot₂ j) ≅ (𝓑 j)
   subemb→quot≅Bᵢ j = ({!!} , {!!}) , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
     where
-      gIsSurj : IsSurjective (proj₁ g)
-      gIsSurj {y} = Setoid.Functions.eq {!!} {!!}
-      
-      pi∘gIsSurj : ∀ (k : I) → IsSurjective (function (proj₁ g) (⨅-fun 𝓑 k))
-      pi∘gIsSurj k {y} = {!!}
+ 
+      pi∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
+      pi∘gIsSurj = {!!}
 
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
-      quotIso = {!!}
+      quotIso = {!!} , record { Hom = {!!} ; IsBij = {!!} }
     
-{- subemb→quot≅Bᵢ : ∀ ( j : I ) (g : SubdirectEmbedding 𝐀 𝓑)
-                  → (familyOfRels θ j) ⇔ (fker (function (proj₁ g) (⨅-fun 𝓑 j)))
-                  → (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} × (famOfQuot j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j g (θ→ker , ker→θ) = ({!!} , {!!}) , Iso→≅ (famOfQuot j) (𝓑 j) {!!} -- mkiso {!!} {!!} {!!} {!!}
-    where
-      open IsSubEmb (proj₂ g) renaming (IsSubdirProd to subp)
-      pᵢBIsSurj : ∀ (k : I) → IsSurjective (⨅-fun 𝓑 k)
-      pᵢBIsSurj k {y} = {!!}
-      
-      pᵢ∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
-      pᵢ∘gIsSurj {y} = {!!}
-      
-      kerg=∩θ : (fker (proj₁ g)) ⇔ (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ))
-      kerg=∩θ = {!!}
--}
