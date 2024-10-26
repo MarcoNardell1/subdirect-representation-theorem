@@ -247,17 +247,11 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
   NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfQuot  NatMap
   NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
-                                            ; genAlg≤Prod = ( F , record { compatible = λ j →
-                                                                                      IsHom.compatible
-                                                                                        (proj₂ (family j))
-                                                                         }
-                                                            )
-                                                           , λ x j → x j
                                             ; isSubdirProd = λ j {a} → Setoid.Functions.eq ((λ k → a) , a , λ l → IsEquivalence.refl
                                               ( IsCongruence.is-equivalence
                                                 ( proj₂ (θ l) ))) (IsEquivalence.refl
                                               ( IsCongruence.is-equivalence
-                                                ( proj₂ (θ j)) )) --  ⊙-IsSurjective (FisSurj j) (pᵢIsSurj j) 
+                                                ( proj₂ (θ j)) )) 
                                             }
     where
       monOfProd : IsMon 𝐀 (⨅ famOfQuot) NatMap
@@ -341,7 +335,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ 
       pi∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
       pi∘gIsSurj {y} with subp j {y}
-      ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a {!!}
+      ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a (bjtrans y≈gt (bjsym (bᵢ≈ga j))) 
 
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
       quotIso = F , record { Hom = {!!} ; IsBij = {!!} }
