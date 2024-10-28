@@ -24,7 +24,7 @@ open import Setoid.Functions  using (IsInjective
 open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.Subembedding
-open import Prod.Subdirect using (⨅-fun)
+open import Prod.Subdirect using (⨅-fun ; IsSubdirectProduct)
 open import Isomorphisms.Isomorphisms using (Iso ; Iso→≅)
 open import Utils.Axioms using (absurd ; ¬∀→∃¬)
 
@@ -247,11 +247,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
   NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfQuot  NatMap
   NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
-                                            ; isSubdirProd = λ j {a} → Setoid.Functions.eq ((λ k → a) , a , λ l → IsEquivalence.refl
-                                              ( IsCongruence.is-equivalence
-                                                ( proj₂ (θ l) ))) (IsEquivalence.refl
-                                              ( IsCongruence.is-equivalence
-                                                ( proj₂ (θ j)) )) 
+                                            ; isSubdirProd = DirImageIsSubEmb 
                                             }
     where
       monOfProd : IsMon 𝐀 (⨅ famOfQuot) NatMap
@@ -267,8 +263,24 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
       open IsMon monOfProd 
       open Algebra (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd)) renaming (Domain to gA)
 
+      open Image_∋_ 
       F : Func gA ⨅A/θ
       F = record { f = λ {(f , p) j →  (<$> NatMap) (f j) j}; cong = λ xθjy j → xθjy j}
+      
+      DirImageIsSubEmb : IsSubdirectProduct (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd))
+                                            famOfQuot
+                                            (subAlg 𝐀 famOfQuot (NatMap , monOfProd))
+      DirImageIsSubEmb j {a} = eq ((λ k → a) , a , θₗRefl ) refl-j
+        where
+          open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equivj)
+          open IsEquivalence equivj renaming (refl to refl-j)
+          
+          θₗRefl : (l : I) → proj₁ (θ l) a a
+          θₗRefl l = refl-l
+            where
+              open IsCongruence (proj₂ (θ l)) renaming (is-equivalence to equivl)
+              open IsEquivalence equivl renaming (refl to refl-l)
+          
 
 -- last statement of proposition
 module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (g : SubdirectEmbedding 𝐀 𝓑) where
@@ -332,16 +344,33 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       open Setoid Bj renaming (_≈_ to _≈bj_ ; sym to bjsym ; trans to bjtrans)
 
       open Image_∋_
-      -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ 
-      pi∘gIsSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
-      pi∘gIsSurj {y} with subp j {y}
-      ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a (bjtrans y≈gt (bjsym (bᵢ≈ga j))) 
 
+    {- Defined in the original proof but not used in the formalization -}
+      pi∘gIsSurjDeprecated : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 j))
+      pi∘gIsSurjDeprecated {y} with subp j {y}
+      ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a (bjtrans y≈gt (bjsym (bᵢ≈ga j)))
+
+      -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
-      quotIso = F , record { Hom = {!!} ; IsBij = {!!} }
+      quotIso = F , record { Hom = FIsHom ; IsBij = (λ fx=fy → fx=fy) ,  pᵢ∘gIsSurj }
         where
+          {-
+            Defining F : 𝐀／θᵢ → 𝓑ᵢ as
+                     F(a／θᵢ) = pᵢ (g (a)).
+
+            The composition pᵢ ∘ g is f here.
+            Then, F is a homomorphism because pᵢ ∘ g is also a homomorphism.
+          -}
+          
           F : Func 𝔻[ (famOfQuot₂ j) ] Bj
-          F = {!!}
+          F = record { f = λ x → f x j  ; cong = λ x → x }
+
+          FIsHom : IsHom (famOfQuot₂ j) (𝓑 j) F
+          FIsHom = record { compatible = λ {h} {a} → gCompatible j }
+
+          pᵢ∘gIsSurj : IsSurjective F
+          pᵢ∘gIsSurj {y} with subp j {y}
+          ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a ((bjtrans y≈gt (bjsym (bᵢ≈ga j))))
     
       -- Proving that ∩θ = 0A
       kerg≈∩θ : fker (proj₁ g) ⇔  ⋂ᵣ {s = α ⊔ i} I θᵢ
