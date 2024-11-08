@@ -7,7 +7,7 @@ open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred)
 open import Relation.Nullary        using (¬_)
-open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂)
+open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂ ; Σ ; _,_)
 open import Data.Unit.Polymorphic   using (⊤)
 open import Data.Sum                using (_⊎_) 
 open import Function                using (flip)
@@ -238,4 +238,35 @@ ZornsLemma {c} {ℓ₁} {ℓ₂} {ℓ₃} P = (∀ (C : Chain c ℓ₁ ℓ₂ �
                         ; _≈_ to _≈p_
                         ; Carrier to A
                           ) 
+\end{code}
+
+Definimos ahora la nocion de Intervalo de un Poset. Para un poset $\mathbf{P}$, dos elementos $a , b \in P$ y una prueba de $a \leq b$ definimos el predicado I[_ , _ ] _ de la siguiente forma.
+\begin{code}
+{-
+  Let 𝐏 a poset, a, b ∈ P. We define the interval 𝐈[ a , b ] as the subset of P such that {x ∈ P : a ≤ x ≤ b}
+-}
+
+module _ {c ℓ₁ ℓ₂}  (𝐏 : Poset c ℓ₁ ℓ₂) where
+  open Poset 𝐏 renaming (Carrier to P ; _≤_ to _≤p_ ; isPartialOrder to PO)
+  open IsPartialOrder PO
+  𝐈[_][_,_] : ∀ (a b : P) → Pred P ℓ₂ 
+  𝐈[_][_,_] a b x = (a ≤p x) × (x ≤p b)
+
+\end{code}
+
+Ahora mostraremos la proposicion 2.14 sobre como definir reticulados completos. A partir de un Poset P definimos un predicado para todo subconjunto de P, escribimos reticulados completos de la siguiente manera.
+
+\begin{code}
+{-
+  Let 𝐏 a Poset in which inf X exists for each X ⊆ P. Then 𝐏 is a complete lattice.
+-}
+module _ {c ℓ₁ ℓ₂} (𝐏 : Poset c ℓ₁ ℓ₂) where
+  open Poset 𝐏 renaming (Carrier to P ; _≤_ to _≤p_ ; isPartialOrder to PO)
+  open IsPartialOrder PO
+
+  postulate
+    compLatticeDef : ∀ (X : Pred P ℓ₂) (x : P)
+                   → IsInfimum _≤p_ X x
+                   → CompleteLattice c ℓ₁ ℓ₂ ℓ₂ ℓ₂
+
 \end{code}
