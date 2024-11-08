@@ -2,7 +2,7 @@ module Lattice where
 
 -- Standard library imports
 open import Relation.Binary.Lattice using (Lattice ; Infimum ; Supremum ; IsLattice)
-open import Relation.Binary         using (Rel ; IsPartialOrder)
+open import Relation.Binary         using (Rel ; IsPartialOrder ; Poset ; IsPreorder ; IsEquivalence)
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred)
 open import Relation.Nullary        using (¬_)
@@ -152,9 +152,9 @@ CompleteLatticeIsLattice CL = record { Carrier = Carrier
 module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ ℓ₁} where
   open CompleteLattice CL
 
-  L : Lattice c ℓ₁ ℓ₁
-  L = CompleteLatticeIsLattice CL
-  open Lattice L renaming ( Carrier to A
+  𝐋 : Lattice c ℓ₁ ℓ₁
+  𝐋 = CompleteLatticeIsLattice CL
+  open Lattice 𝐋 renaming ( Carrier to A
                           ; _≈_ to _≈l_
                           ; _≤_ to _≤l_
                           )
@@ -315,4 +315,103 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
                                   (a<c , ≤-eq (c≤inf X XClosed p)
                                   (CL.Eq.sym (proj₁ p)))
       
-open MeetIrreducible
+-- open MeetIrreducible
+
+{- Proving that an Interval of a Lattice 𝐋 is a sublattice of 𝐋 -}
+
+module _ {c ℓ₁ ℓ₂} (𝐋 : Lattice c ℓ₁ ℓ₂) where
+  open Lattice 𝐋 renaming ( Carrier to L
+                          ; isPartialOrder to PO
+                          ; _≈_ to _≈l_
+                          ; _≤_ to _≤l_
+                          )
+
+  open IsPartialOrder PO renaming ( trans to ltrans
+                                  ; antisym to lantisym
+                                  ; reflexive to lreflexive
+                                  ; isPreorder to prO
+                                  ; isEquivalence to equiv
+                                  )
+
+  open IsEquivalence equiv renaming ( refl to eqrefl
+                                    ; sym to eqsym
+                                    ; trans to eqtrans
+                                    )
+  
+  LisPoset : Poset c ℓ₁ ℓ₂
+  LisPoset = record { Carrier =  L
+                    ; _≈_ = _≈l_
+                    ; _≤_ = _≤l_
+                    ; isPartialOrder = PO
+                    }
+
+  IntervalIsLattice : ∀ (a b : L) → Lattice (c ⊔ ℓ₂) ℓ₁ _
+  IntervalIsLattice a b = record
+                           { Carrier = Car
+                           ; _≈_ = _≈ᵢ_
+                           ; _≤_ = _≤ᵢ_
+                           ; _∨_ = _∨ᵢ_
+                           ; _∧_ = _∧ᵢ_
+                           ; isLattice = intervalIsLattice
+                           }
+   where
+     Car : Set (c ⊔ ℓ₂)
+     Car = Σ[ y ∈ L ] (𝐈[ LisPoset ][ a , b ] y)  
+
+     _≈ᵢ_ : Rel Car ℓ₁
+     x ≈ᵢ y = (proj₁ x) ≈l (proj₁ y)
+
+     _≤ᵢ_ : Rel Car ℓ₂
+     x ≤ᵢ y = (proj₁ x) ≤l (proj₁ y)
+
+     _∨ᵢ_ : Op₂ Car
+     x ∨ᵢ y = z , z∈𝐈
+       where
+         z : L
+         z = (proj₁ x) ∨ (proj₁ y)
+
+         z∈𝐈 : 𝐈[ LisPoset ][ a , b ] z
+         z∈𝐈 = ltrans (proj₁ (proj₂ x)) (proj₁ (supremum (proj₁ x) (proj₁ y)))
+             , proj₂ (proj₂ (supremum (proj₁ x) (proj₁ y))) b (proj₂ (proj₂ x)) (proj₂ (proj₂ y))
+
+     _∧ᵢ_ : Op₂ Car
+     x ∧ᵢ y = z , z∈𝐈
+       where
+         z : L
+         z = (proj₁ x) ∧ (proj₁ y)
+
+         z∈𝐈 : 𝐈[ LisPoset ][ a , b ] z
+         z∈𝐈 = (proj₂ (proj₂ (infimum (proj₁ x) (proj₁ y))) a (proj₁ (proj₂ x)) (proj₁ (proj₂ y)))
+             , ltrans (proj₁ (infimum (proj₁ x) (proj₁ y))) (proj₂ (proj₂ x))
+
+     ≈-isEquiv : IsEquivalence _≈ᵢ_
+     ≈-isEquiv = record { refl = eqrefl
+                        ; sym = λ x≈y → eqsym x≈y
+                        ; trans = λ x≈y y≈z → eqtrans x≈y y≈z
+                        }
+
+     intervalPreorder : IsPreorder _≈ᵢ_ _≤ᵢ_ 
+     intervalPreorder = record { isEquivalence = ≈-isEquiv
+                               ; reflexive = λ x≈y → lreflexive x≈y
+                               ; trans = λ x≤y y≤z  → ltrans x≤y y≤z
+                               }
+     
+     intervalPartialOrder : IsPartialOrder _≈ᵢ_ _≤ᵢ_
+     intervalPartialOrder = record { isPreorder = intervalPreorder
+                                   ; antisym = λ x y → lantisym x y
+                                   }
+     ∨-isSup : Supremum _≤ᵢ_ _∨ᵢ_
+     ∨-isSup x y = proj₁ (supremum (proj₁ x) (proj₁ y))
+               , proj₁ (proj₂ (supremum (proj₁ x) (proj₁ y)))
+               , λ z x≤z y≤z → proj₂ (proj₂ (supremum (proj₁ x) (proj₁ y))) (proj₁ z) x≤z y≤z
+
+     ∧-isInf : Infimum _≤ᵢ_ _∧ᵢ_
+     ∧-isInf x y = proj₁ (infimum (proj₁ x) (proj₁ y))
+                 , (proj₁ (proj₂ (infimum (proj₁ x) (proj₁ y))))
+                 , λ z z≤x z≤y → proj₂ (proj₂ (infimum (proj₁ x) (proj₁ y))) (proj₁ z) z≤x z≤y
+     
+     intervalIsLattice : IsLattice _≈ᵢ_ _≤ᵢ_ _∨ᵢ_ _∧ᵢ_
+     intervalIsLattice = record { isPartialOrder = intervalPartialOrder
+                                ; supremum = ∨-isSup
+                                ; infimum = ∧-isInf
+                                }
