@@ -27,14 +27,10 @@ open import Prod.Subembedding
 open import Prod.Subdirect using (⨅-fun ; IsSubdirectProduct)
 open import Isomorphisms.Isomorphisms using (Iso ; Iso→≅)
 open import Utils.Axioms using (absurd ; ¬∀→∃¬)
-
+open import Utils.Definitions
 private variable α β ρᵅ ρᵝ i : Level
 
 open Func renaming (f to <$>) 
-
--- arbitray intersection
-⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
-⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
 
 -- family of homomorphisms
 module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where
