@@ -265,8 +265,8 @@ module _ {c ℓ₁ ℓ₂} (𝐏 : Poset c ℓ₁ ℓ₂) where
   open IsPartialOrder PO
 
   postulate
-    compLatticeDef : ∀ (X : Pred P ℓ₂) (x : P)
-                   → IsInfimum _≤p_ X x
+    compLatticeDef : ∀ {ℓ} (X : Pred P ℓ) (⋀_ : Op P)
+                   → IsInfimum _≤p_ X (⋀ X)
                    → CompleteLattice c ℓ₁ ℓ₂ ℓ₂ ℓ₂
 
 \end{code}

@@ -27,7 +27,7 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
   θᵢ ≈c θⱼ = proj₁ θᵢ ⇔ proj₁ θⱼ
 
   _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ ρᵅ)
-  θᵢ ⊆c θⱼ = proj₁ θᵢ ⇒ proj₁ θⱼ
+  θᵢ ⊆c θⱼ =(proj₁ θᵢ ⇒ proj₁ θⱼ)
 
   ≈-isEquiv : IsEquivalence _≈c_
   ≈-isEquiv = record { refl = (λ xθy → xθy) , λ xθy → xθy
@@ -54,15 +54,19 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
                         ; isPartialOrder = ⊆-isPartialOrder
                         }
 
-  open Poset PosetOfCong renaming (_≤_ to _≤c_)
+  open Poset PosetOfCong renaming (_≤_ to _≤c_
+                                  ; Carrier to Cg
+                                  )
   
   -- The meet operation of the Lattice of Congruences is the arbitrary intersection. 
-  ⋀c_ : ∀ {ℓ} → Pred (Con 𝐀 {ℓ}) ℓ → Con 𝐀 {α ⊔ ρᵅ ⊔ (ov ℓ) ⊔ ℓ} -- Op (Con 𝐀 {ρᵅ}) {α ⊔ ρᵅ}
-  ⋀c_ {ℓ} X =  _∼_ , ∼Cong
+  ⋀c_ : Pred (Con 𝐀 {ρᵅ}) ρᵅ → Con 𝐀 {α ⊔ (ov ρᵅ)} -- Op (Con 𝐀 {ρᵅ}) {α ⊔ ρᵅ}
+  ⋀c_  X =  _∼_ , ∼Cong
     where
-      _∼_ : Rel 𝕌[ 𝐀 ] (α ⊔ ρᵅ ⊔ (ov ℓ))
-      x ∼ y = (R : Con 𝐀 {ℓ}) → X R → proj₁ R x y
+      -- Defining the relation of intersection of Congruences
+      _∼_ : Rel 𝕌[ 𝐀 ] (α ⊔ (ov ρᵅ))
+      x ∼ y = (R : Con 𝐀 {ρᵅ}) → X R → proj₁ R x y
 
+      -- Proving that the intersection of congruences is a congruence
       x≈y→x∼y : {x y :  𝕌[ 𝐀 ]} → x ≈ₐ y → x ∼ y
       x≈y→x∼y x=y R R∈X = Rreflexive x=y
         where
@@ -104,4 +108,26 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
                      ; is-compatible = ∼isCompatible
                      }
 
-   
+  -- Postulating the existence of the complete lattice of congruences
+{-
+  InfExists : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ) → IsInfimum {a = (α ⊔ (ov ρᵅ))} {ℓ = (α ⊔ ρᵅ)} {ℓ₁ = ρᵅ} _≤c_ X {!bli!} 
+  InfExists X = {!!}
+    where
+      ble : Set (α ⊔ (ov ρᵅ))
+      ble = Cg
+  
+      bli : Cg
+      bli = {!⋀c X!}
+-}
+
+  -- Proving that ⋀c is a lower bound for every subset of congruences
+  InfIsLowerBound : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ) → ∀ (R : Con 𝐀 {ρᵅ}) → X R → ∀ {x y : Car} → (proj₁ (⋀c X)) x y → (proj₁ R) x y 
+  InfIsLowerBound X R R∈X ∩X = ∩X R R∈X
+
+  InfIsGreatLB : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ)
+               → ∀ (ϕ : Con 𝐀 {ρᵅ}) → IsLowerBound _≤c_ X ϕ → ∀ {x y : Car} → (proj₁ ϕ) x y 
+               → (proj₁ (⋀c X)) x y    
+  InfIsGreatLB X ϕ LB xϕy R R∈X = LB R R∈X xϕy
+
+  postulate
+    congCompLattice : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ ρᵅ) (α ⊔ ρᵅ) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
