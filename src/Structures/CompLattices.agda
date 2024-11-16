@@ -130,4 +130,4 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
   InfIsGreatLB X ϕ LB xϕy R R∈X = LB R R∈X xϕy
 
   postulate
-    congCompLattice : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ ρᵅ) (α ⊔ ρᵅ) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
+    congCompLattice : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
