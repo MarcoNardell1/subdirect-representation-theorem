@@ -35,8 +35,6 @@ module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓐 : 
 
 record SubdirectlyIrreducible : Set (ov (i ⊔ α ⊔ ρᵅ)) where
   field
-    ix : Set i
     base : NonTrivialAlgebra {β = α} {ρ = ρᵅ}
-    family : ix → Algebra α ρᵅ
-    isSubIrr : IsSubIrreducible base family
+    isSubIrr : ∀ {ix : Set i} (family : ix → Algebra α ρᵅ) →  IsSubIrreducible base family
 

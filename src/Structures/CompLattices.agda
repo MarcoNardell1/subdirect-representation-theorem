@@ -19,35 +19,37 @@ In this module we will work on the corollary that defines the complete lattice o
 Firstly, we will define the Poset of congruences ordered by inclusion. So this is ⟨Con 𝐀 , ⊆⟩ where given two congruences θ ϕ, θ ⊆ ϕ is, ∀ x y ∈ A, x θ y ⇒ x ϕ y.
 For checking that the poset of congruences is a complete lattice, we need to check that the arbitray intersection is the infimum operation for this Poset, after that for 2.14 ⟨Con 𝐀 , ⊆⟩ is a complete lattice.  
 -}
-module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
+module _ (𝐀 : Algebra α ρᵅ) where
   open Algebra 𝐀 renaming (Domain to A)
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈ₐ_)
 
-  _≈c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ ρᵅ)
-  θᵢ ≈c θⱼ = proj₁ θᵢ ⇔ proj₁ θⱼ
+  _≈c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
+  θᵢ ≈c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇔ proj₁ θⱼ)) -- (proj₁ θᵢ ⇔ proj₁ θⱼ)
 
-  _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ ρᵅ)
-  θᵢ ⊆c θⱼ =(proj₁ θᵢ ⇒ proj₁ θⱼ)
+  _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
+  θᵢ ⊆c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇒ proj₁ θⱼ)) -- (proj₁ θᵢ ⇒ proj₁ θⱼ)
 
   ≈-isEquiv : IsEquivalence _≈c_
-  ≈-isEquiv = record { refl = (λ xθy → xθy) , λ xθy → xθy
-                     ; sym = λ θ=ϕ → proj₂ θ=ϕ , proj₁ θ=ϕ
-                     ; trans = λ θ=ϕ ϕ=ψ → ( λ xθy → proj₁ ϕ=ψ (proj₁ θ=ϕ xθy) )
-                                            , λ xψy → proj₂ θ=ϕ (proj₂ ϕ=ψ xψy)
+  ≈-isEquiv = record { refl = lift ((λ xθy → xθy) , λ xθy → xθy)
+                     ; sym = λ θ=ϕ → lift (proj₂ (lower θ=ϕ) , proj₁ (lower θ=ϕ))
+                     ; trans = λ θ=ϕ ϕ=ψ → lift
+                                              ( (( λ xθy → proj₁ (lower ϕ=ψ) (proj₁ (lower θ=ϕ) xθy)))
+                                              , λ xψy → proj₂ (lower θ=ϕ) (proj₂ (lower ϕ=ψ) xψy)
+                                              ) 
                      }
 
   ⊆-isPreorder : IsPreorder _≈c_ _⊆c_
   ⊆-isPreorder = record { isEquivalence = ≈-isEquiv
-                        ; reflexive = λ θ=ϕ xθy → proj₁ θ=ϕ xθy
-                        ; trans = λ θ⊆ϕ ϕ⊆ψ xθy → ϕ⊆ψ (θ⊆ϕ xθy)
+                        ; reflexive = λ θ=ϕ → lift λ xθy → proj₁ (lower θ=ϕ) xθy
+                        ; trans = λ θ⊆ϕ ϕ⊆ψ → lift λ xθy → lower ϕ⊆ψ (lower θ⊆ϕ xθy)
                         }
 
   ⊆-isPartialOrder : IsPartialOrder _≈c_ _⊆c_
   ⊆-isPartialOrder = record { isPreorder = ⊆-isPreorder
-                            ; antisym = λ θ⊆ϕ ϕ⊆θ → θ⊆ϕ , ϕ⊆θ
+                            ; antisym = λ θ⊆ϕ ϕ⊆θ → lift (lower θ⊆ϕ , lower ϕ⊆θ)
                             }
-  
-  PosetOfCong : Poset (α ⊔ (ov (ρᵅ))) (α ⊔ ρᵅ) (α ⊔ ρᵅ)
+
+  PosetOfCong : Poset (α ⊔ ov (ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
   PosetOfCong  = record { Carrier = Con 𝐀 {ρᵅ}
                         ; _≈_ = _≈c_
                         ; _≤_ = _⊆c_
@@ -59,8 +61,8 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
                                   )
   
   -- The meet operation of the Lattice of Congruences is the arbitrary intersection. 
-  ⋀c_ : Pred (Con 𝐀 {ρᵅ}) ρᵅ → Con 𝐀 {α ⊔ (ov ρᵅ)} -- Op (Con 𝐀 {ρᵅ}) {α ⊔ ρᵅ}
-  ⋀c_  X =  _∼_ , ∼Cong
+  ⋀c : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)) → Con 𝐀 {α ⊔ (ov ρᵅ)} -- Op (Con 𝐀 {ρᵅ}) {α ⊔ ρᵅ}
+  ⋀c  X = _∼_ , ∼Cong
     where
       -- Defining the relation of intersection of Congruences
       _∼_ : Rel 𝕌[ 𝐀 ] (α ⊔ (ov ρᵅ))
@@ -108,9 +110,28 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
                      ; is-compatible = ∼isCompatible
                      }
 
+
   -- Postulating the existence of the complete lattice of congruences
 {-
-  InfExists : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ) → IsInfimum {a = (α ⊔ (ov ρᵅ))} {ℓ = (α ⊔ ρᵅ)} {ℓ₁ = ρᵅ} _≤c_ X {!bli!} 
+  No podemos definir InfExists para todo subconjunto de X dado que X esta en un nivel mas alto que las relaciones binarias.
+  Por lo que seria necesario liftear todas las operaciones para poder trabajar con dichos niveles. 
+-}
+{-
+  -- Proving that ⋀c is a lower bound for every subset of congruences
+  InfIsLowerBound : (X : Pred (Con 𝐀 {α ⊔ (ov ρᵅ)}) (α ⊔ (ov ρᵅ)))
+                  → ∀ (R : Con 𝐀 {α ⊔ (ov ρᵅ)})
+                  → X R
+                  → ∀ {x y : Car} → (proj₁ (⋀c X)) x y → (proj₁ R) x y 
+  InfIsLowerBound X R R∈X ∩X = ∩X R R∈X
+
+  InfIsGreatLB : (X : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)))
+               → ∀ (ϕ : Con 𝐀 {ρᵅ})
+               → IsLowerBound _≤c_ X ϕ
+               → ∀ {x y : Car} → (proj₁ ϕ) x y 
+               → (proj₁ (⋀c X)) x y    
+  InfIsGreatLB X ϕ LB xϕy R R∈X = lower (LB R R∈X) xϕy -- LB R R∈X xϕy
+
+  InfExists : (X : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))) → IsInfimum _≤c_ X {!!} 
   InfExists X = {!!}
     where
       ble : Set (α ⊔ (ov ρᵅ))
@@ -119,15 +140,5 @@ module _ {i} (I : Set i) (𝐀 : Algebra α ρᵅ) where
       bli : Cg
       bli = {!⋀c X!}
 -}
-
-  -- Proving that ⋀c is a lower bound for every subset of congruences
-  InfIsLowerBound : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ) → ∀ (R : Con 𝐀 {ρᵅ}) → X R → ∀ {x y : Car} → (proj₁ (⋀c X)) x y → (proj₁ R) x y 
-  InfIsLowerBound X R R∈X ∩X = ∩X R R∈X
-
-  InfIsGreatLB : (X : Pred (Con 𝐀 {ρᵅ}) ρᵅ)
-               → ∀ (ϕ : Con 𝐀 {ρᵅ}) → IsLowerBound _≤c_ X ϕ → ∀ {x y : Car} → (proj₁ ϕ) x y 
-               → (proj₁ (⋀c X)) x y    
-  InfIsGreatLB X ϕ LB xϕy R R∈X = LB R R∈X xϕy
-
   postulate
     congCompLattice : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
