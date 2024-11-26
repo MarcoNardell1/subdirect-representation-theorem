@@ -7,6 +7,7 @@ open import Relation.Nullary
 open import Relation.Unary using (Pred)
 open import Relation.Binary using (Setoid ; IsEquivalence ; _⇔_)
 open import Function using (Func)
+open import Function.Construct.Composition using (function)
 
 open import Relation.Binary.PropositionalEquality as ≡ using ()
 import Relation.Binary.Reasoning.Setoid           as SReasoning  using ( begin_ ; step-≈˘; step-≈; _∎)
@@ -38,33 +39,6 @@ open MeetIrreducible
 
 -}
 
-{- Tomemos un conjunto de indices, un algebra no trivial 𝐀 y una familia de algebras del mismo tipo de 𝐀,
-esta familia sera la que formara la representacion de 𝐀
--}
-
-{- 𝓐 deberia ser la familia de todas las algebras cocientes -} 
-module _ {I : Set i} (𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓐 : I → Algebra α ρᵅ) where
-
-  Alg : Algebra α ρᵅ
-  Alg = proj₁ 𝐀
-  
-  open Algebra Alg renaming ( Domain to A
-                            ; Interp to AInterp
-                            )
-  open Algebra (⨅ 𝓐) renaming (Domain to ⨅A)
-  open Setoid ⨅A renaming (_≈_ to _≈b_)
-
-  -- Lattice of congruences of 𝐀 
-  CongsOf𝐀 : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
-  CongsOf𝐀 =  congCompLattice Alg
-
-  open CompleteLattice CongsOf𝐀 renaming (Carrier to Cg)
--- Aca debemos ver que efectivamente la congruencia dada por 0_A pertenece al universo del reticulado de congruencias
-{-
-  No se si nos podemos asegurar porque no sabemos la forma del reticulado de congruencias todavia.
--}
-  0rel∈Cg : Cg
-  0rel∈Cg = {!0relCong!}
 {-
   We are going to split the theorem above in two propositions for each of the statements,
   the particular for 𝐀 and the general for each 𝐀／θ.
@@ -132,6 +106,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B renaming (_≈_ to _≈b_)
+
 {-
   conRCL : CompleteLattice {!!} {!!} {!!} {!!} {!!}
   conRCL = congCompLattice 𝐁 
@@ -143,8 +118,14 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
   IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c 𝐁 P) ⇔ (proj₁ C) → P C)
   
   0CMI : IsCongCMI (0relCong n𝐀) 
-  0CMI = {!!} , 0=⋀P→θ=0
+  0CMI = abs , 0=⋀P→θ=0
     where
+      x≠y→¬x0y : ∀ {x y : 𝕌[ 𝐁 ]} → ¬ (x ≈b y) → ¬ (proj₁ (0relCong n𝐀) x y)
+      x≠y→¬x0y x≠y (lift x0y) = x≠y x0y
+
+      abs : ¬ ((x y : 𝕌[ 𝐁 ]) → proj₁ (0relCong n𝐀) x y)
+      abs x=y = x≠y→¬x0y (proj₂ (proj₂ (proj₂ n𝐀))) (x=y (proj₁ (proj₂ n𝐀)) (proj₁ (proj₂ (proj₂ n𝐀))))
+          
       0=⋀P→θ=0 : (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ)))
                → ⇔-closed P
                → proj₁ (⋀c 𝐁 P) ⇔ proj₁ (0relCong n𝐀)
@@ -177,13 +158,35 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
           subemb : SubdirectEmbedding 𝐁 quotAlgs
           subemb = NatMap 𝐁 CongIx , natMap
 
-          {- because of 𝐀 is a subdirectly irreducible algebra, we have an isomorphism of pᵢ ∘ h,
-            for all subdirect embedding h. -}
+          {- because of 𝐀 is a subdirectly irreducible algebra,for some i ∈ I we have an isomorphism of pᵢ ∘ h,
+            for all subdirect embedding h. Now we have to check that pᵢ is an iso.-}
 
-          projIsIso : IsIso 𝐁 (⨅ quotAlgs) (proj₁ subemb) 
-          projIsIso = {!!}
+          projIsIso : Σ[ j ∈ ix ] (IsIso 𝐁 (quotAlgs j) (function (proj₁ subemb) (⨅-fun quotAlgs j)))
+          projIsIso = sb quotAlgs subemb
+
+          open IsIso (proj₂ projIsIso) renaming ( Hom to h ; IsBij to bj)
+          {- Now we have to prove that 0_A = ker (pᵢ ∘ NatMap) = θᵢ. We are going to split this in three checks
+            1. 0_A = ker (pᵢ ∘ NatMap)
+            2. ker (pᵢ ∘ NatMap) = θᵢ
+            3. 0_A = θᵢ
+          -}
+          0=kerProj : Σ[ j ∈ ix ] (proj₁ (0relCong n𝐀) ⇔ (fker (function (proj₁ subemb) (⨅-fun quotAlgs j))))
+          0=kerProj = (proj₁ (sb quotAlgs subemb))
+                     , (λ x0y → cong (function (proj₁ subemb) (⨅-fun quotAlgs (proj₁ projIsIso))) (lower x0y))
+                     , λ xy∈ker → lift (proj₁ bj xy∈ker)
+
+          kerProj=θᵢ : Σ[ j ∈ ix ] (fker (function (proj₁ subemb) (⨅-fun quotAlgs j)) ⇔ proj₁ (proj₁ j))
+          kerProj=θᵢ = proj₁ (sb quotAlgs subemb)
+                     , (λ xy∈ker → xy∈ker)
+                     , λ xθᵢy → xθᵢy
+
+          0=θᵢ : Σ[ j ∈ ix ] (proj₁ (0relCong n𝐀) ⇔ proj₁ (proj₁ j))
+          0=θᵢ = (proj₁ (sb quotAlgs subemb))
+               , (λ x0y → proj₁ (proj₂ kerProj=θᵢ) (proj₁ (proj₂ 0=kerProj) x0y))
+               , λ xθᵢy → proj₂ (proj₂ 0=kerProj) (proj₂ (proj₂ kerProj=θᵢ) xθᵢy)
+
+          {- Because 0=θᵢ then 0 ∈ P, so 0 is completely meet irreducible -}
 {-
-
 TODO:
 1. Modularizar mejor
 2. Avanzar con la prueba de 0CMI, tener en contexto que el algebra sea subdirectly irreducible

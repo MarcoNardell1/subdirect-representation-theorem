@@ -24,7 +24,7 @@ IsTrivialAlgebra 𝐀 =  (x y : 𝕌[ 𝐀 ]) → x ≈ y
     open Setoid A
 
 IsNonTrivialAlgebra : ∀ {α ρ} (𝐀 : Algebra α ρ) → Set (α ⊔ ρ)
-IsNonTrivialAlgebra 𝐀 = (x y : 𝕌[ 𝐀 ]) → ¬ (x ≈ y)
+IsNonTrivialAlgebra 𝐀 = Σ[ x ∈ 𝕌[ 𝐀 ] ] (Σ[ y ∈ 𝕌[ 𝐀 ] ] ¬ (x ≈ y))
   where
     open Algebra 𝐀 renaming (Domain to A)
     open Setoid A
