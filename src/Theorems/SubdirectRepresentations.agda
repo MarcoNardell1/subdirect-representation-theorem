@@ -106,11 +106,6 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B renaming (_≈_ to _≈b_)
-
-{-
-  conRCL : CompleteLattice {!!} {!!} {!!} {!!} {!!}
-  conRCL = congCompLattice 𝐁 
--}
   ⇔-closed : ∀ (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ))) → Set (α ⊔ (ov ρᵅ))
   ⇔-closed P = ∀ x y → P x → (proj₁ x) ⇔ (proj₁ y) → P y
   
@@ -130,7 +125,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
                → ⇔-closed P
                → proj₁ (⋀c 𝐁 P) ⇔ proj₁ (0relCong n𝐀)
                → P (0relCong n𝐀)
-      0=⋀P→θ=0 P Pclosed ⋀P=0 = {!!}
+      0=⋀P→θ=0 P Pclosed ⋀P=0 = 0∈P
         where
           {- defining index set as the congruences on P-}
           ix : Set (α ⊔ (ov ρᵅ))
@@ -186,10 +181,12 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
                , λ xθᵢy → proj₂ (proj₂ 0=kerProj) (proj₂ (proj₂ kerProj=θᵢ) xθᵢy)
 
           {- Because 0=θᵢ then 0 ∈ P, so 0 is completely meet irreducible -}
+          0∈P : P (0relCong n𝐀)
+          0∈P = Pclosed (proj₁ (proj₁ 0=θᵢ))
+                        (0relCong n𝐀)
+                        (proj₂ (proj₁ 0=θᵢ))
+                        (proj₂ (proj₂ 0=θᵢ) , proj₁ (proj₂ 0=θᵢ))
 {-
 TODO:
-1. Modularizar mejor
-2. Avanzar con la prueba de 0CMI, tener en contexto que el algebra sea subdirectly irreducible
 3. Ver la vuelta
-
 -}
