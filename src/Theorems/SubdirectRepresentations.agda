@@ -16,9 +16,9 @@ import Relation.Binary.Reasoning.Setoid           as SReasoning  using ( begin_ 
 open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Relations using (0rel ; fker)
 
-open import Prod.SubdirIrreducible {𝑆 = 𝑆}
-open import Prod.NatMapProps {𝑆 = 𝑆}
-open import Prod.Subdirect {𝑆 = 𝑆}
+open import Prod.SubdirIrreducible {𝑆 = 𝑆} using ( SubdirectlyIrreducible ; IsSubIrreducible )
+open import Prod.NatMapProps {𝑆 = 𝑆} using ( familyOfRels ; NatMapIsSubEmb ; NatMap ; subemb→quot≅Bᵢ)
+open import Prod.Subdirect {𝑆 = 𝑆} using ( ⨅-fun )
 open import Prod.Subembedding {𝑆 = 𝑆}
 open import Structures.Algebras {𝑆 = 𝑆}
 open import Structures.CompLattices {𝑆 = 𝑆}
@@ -31,6 +31,7 @@ open import Utils.Definitions
 private variable α ρᵅ i : Level
 open Func renaming (f to <$>)
 open MeetIrreducible 
+
 {-
  Theorem :
  An algebra 𝐀 is subdirectly irreducible iff 0_A is completely meet irreducible in Con 𝐀.
@@ -97,6 +98,21 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                       ; is-compatible =  0comp
                       }
 
+-- Redifining an element is completelyMeetIrreducible
+{- Using this avoids the use of CongCompleteLattice -}
+module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
+  𝐂 : Algebra α ρᵅ
+  𝐂 = proj₁ n𝐀
+
+  open Algebra 𝐂 renaming (Domain to C)
+  open Setoid C renaming (_≈_ to _≈a_)
+  ⇔-closed : ∀ (P : Pred (Con 𝐂 {ρᵅ}) (α ⊔ (ov ρᵅ))) → Set (α ⊔ (ov ρᵅ))
+  ⇔-closed P = ∀ x y → P x → (proj₁ x) ⇔ (proj₁ y) → P y
+  
+  IsCongCMI : ∀ (C : Con 𝐂 {ρᵅ}) → Set (suc (α ⊔ (ov ρᵅ)))
+  IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c 𝐂 P) ⇔ (proj₁ C) → P C)
+
+-- 𝐀 is subdirectly irreducible implies 0_A is CMI in Con 𝐀
 module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) where
   open SubdirectlyIrreducible 𝐀si renaming ( base to n𝐀
                                          ; isSubIrr to sb
@@ -106,13 +122,8 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B renaming (_≈_ to _≈b_)
-  ⇔-closed : ∀ (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ))) → Set (α ⊔ (ov ρᵅ))
-  ⇔-closed P = ∀ x y → P x → (proj₁ x) ⇔ (proj₁ y) → P y
   
-  IsCongCMI : ∀ (C : Con 𝐁 {ρᵅ}) → Set (suc (α ⊔ (ov ρᵅ)))
-  IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c 𝐁 P) ⇔ (proj₁ C) → P C)
-  
-  0CMI : IsCongCMI (0relCong n𝐀) 
+  0CMI : IsCongCMI n𝐀 (0relCong n𝐀) 
   0CMI = abs , 0=⋀P→θ=0
     where
       x≠y→¬x0y : ∀ {x y : 𝕌[ 𝐁 ]} → ¬ (x ≈b y) → ¬ (proj₁ (0relCong n𝐀) x y)
@@ -122,7 +133,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
       abs x=y = x≠y→¬x0y (proj₂ (proj₂ (proj₂ n𝐀))) (x=y (proj₁ (proj₂ n𝐀)) (proj₁ (proj₂ (proj₂ n𝐀))))
           
       0=⋀P→θ=0 : (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ)))
-               → ⇔-closed P
+               → ⇔-closed n𝐀 P
                → proj₁ (⋀c 𝐁 P) ⇔ proj₁ (0relCong n𝐀)
                → P (0relCong n𝐀)
       0=⋀P→θ=0 P Pclosed ⋀P=0 = 0∈P
@@ -186,7 +197,15 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
                         (0relCong n𝐀)
                         (proj₂ (proj₁ 0=θᵢ))
                         (proj₂ (proj₂ 0=θᵢ) , proj₁ (proj₂ 0=θᵢ))
-{-
-TODO:
-3. Ver la vuelta
--}
+
+
+-- 0_A → 𝐀 is subdirectlyIrreducible
+module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n𝐀 (0relCong n𝐀)) where
+  0→𝐀isSubIrr :  ∀ {ix : Set i} (fam : ix → Algebra α ρᵅ) → IsSubIrreducible n𝐀 fam
+  0→𝐀isSubIrr {ix} ℬ g =  {!!} , {!!}
+    where
+      P : Pred (Con (proj₁ n𝐀) {ρᵅ}) (α ⊔ (ov ρᵅ))
+      P x = {!!} 
+
+  SubIrr : SubdirectlyIrreducible {i} {α} {ρᵅ}
+  SubIrr = record { base = n𝐀 ; isSubIrr = 0→𝐀isSubIrr }
