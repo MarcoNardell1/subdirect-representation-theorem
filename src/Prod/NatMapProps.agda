@@ -43,12 +43,16 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B 
   famSeparatePoints : (h : FamOfHoms 𝐁 𝓐) → Set (i ⊔ β ⊔ ρᵝ ⊔ ρᵅ)
-  famSeparatePoints h = (x  y : 𝕌[ 𝐁 ]) → ¬ (x ≈ y) → Σ[ j ∈ I ] (pred j x y) 
+  famSeparatePoints h = (x  y : 𝕌[ 𝐁 ])
+                      → ¬ (x ≈ y)
+                      → Σ[ j ∈ I ] (pred j x y) 
     where
       open FamOfHoms h
+      hᵢ : (j : I) → Func B 𝔻[ (𝓐 j) ]
+      hᵢ j = (proj₁ (family j))
+      
       pred : (j : I) (x y : 𝕌[ 𝐁 ]) → Set ρᵅ
-      -- usar la igualdad de 𝓐 j
-      pred j x y = ¬ (<$> (proj₁ (family j)) x) ≈aj (<$> (proj₁ (family j)) y)   
+      pred j x y = ¬ (<$> (hᵢ j) x) ≈aj (<$> (hᵢ j) y)   
         where
           open Algebra (𝓐 j) renaming (Domain to Aj)
           open Setoid Aj renaming (_≈_ to _≈aj_)
@@ -61,7 +65,6 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
   (b) h is injective
   (c) ⋂ᵣ I ker(hᵢ) = 0_B
 -}
-
 
 module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (h : FamOfHoms 𝐁 𝓐) where
 
@@ -86,30 +89,34 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
   is such that h(b)(i) = hᵢ(b)
   -} 
   IsProdOfHoms : hom 𝐁 (⨅ 𝓐)
-  IsProdOfHoms  = F , record { compatible = λ j → IsHom.compatible (proj₂ (family j))}
+  IsProdOfHoms  = F , record { compatible = comp }
     where
       F : Func (𝔻[ 𝐁 ]) (𝔻[ (⨅ 𝓐) ])
-      F = record { f = λ b i  → <$> (proj₁ (family i)) b  ; cong = λ {x} {y} x=y j → cong (proj₁ (family j)) x=y }
+      F = record { f = λ b i  → <$> (proj₁ (family i)) b
+                 ; cong = λ {x} {y} x=y j → cong (proj₁ (family j)) x=y
+                 }
+                 
+      comp : compatible-map 𝐁 (⨅ 𝓐) F
+      comp j = hjcomp
+        where
+          open IsHom (proj₂ (family j)) renaming (compatible to hjcomp)
 
 
-  kerOfProd→⋂kers : ∀ (a b : 𝕌[ 𝐁 ]) → (fker ((proj₁ IsProdOfHoms))) a b → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
-  kerOfProd→⋂kers a b  a≈ₖb i = lift (a≈ₖb i)
+  kerOfProd→⋂kers : ∀ {a b : 𝕌[ 𝐁 ]}
+                   → (fker ((proj₁ IsProdOfHoms))) a b
+                   → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
+  kerOfProd→⋂kers a≈ₖb i = lift (a≈ₖb i)
 
-  ⋂kers→kerOfProd : ∀ (a b : 𝕌[ 𝐁 ]) → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b → (fker ((proj₁ IsProdOfHoms))) a b
-  ⋂kers→kerOfProd a b a≈⋂b = λ j → eq j (a≈⋂b j)
-    where
-      eqType : (j : I)  → Set ρᵅ
-      eqType j  = <$> (proj₁ IsProdOfHoms) a j ≈aj <$> (proj₁ IsProdOfHoms) b j
-        where 
-          open Algebra (𝓐 j) renaming (Domain to Aj)
-          open Setoid Aj renaming (_≈_ to _≈aj_)
-
-      eq : (j : I) →  Lift (α ⊔ i ⊔ ρᵅ) (kerOfFam j a b) → eqType j 
-      eq j (lift p) = p
+  ⋂kers→kerOfProd : ∀ {a b : 𝕌[ 𝐁 ]}
+                   → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
+                   → (fker ((proj₁ IsProdOfHoms))) a b
+  ⋂kers→kerOfProd {a} {b} a≈⋂b = λ j → lower (a≈⋂b j)
 
  -- proving ⟨hᵢ : i ∈ I⟩ separates points implies h is injective 
   firstEquiv : famSeparatePoints 𝐁 𝓐 h → IsInjective (proj₁ IsProdOfHoms)
-  firstEquiv sp {x} {y} = λ inj → absurd (x ≈ y) λ ¬x≈y → proj₂ (sp x y ¬x≈y) (inj (proj₁ (sp x y ¬x≈y)))
+  firstEquiv sp {x} {y} inj = absurd (x ≈ y)
+                                     λ ¬x≈y → proj₂ (sp x y ¬x≈y)
+                                                    (inj (proj₁ (sp x y ¬x≈y)))
  
   -- proving h is injective implies ∩ ker hᵢ = 0B
   {-
@@ -121,10 +128,12 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
   0⊆∩ : 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
   0⊆∩ {x = x} {y = y} (lift xθy) j = lift (cong (proj₁ (family j)) xθy)
   
-  secondEquiv₁ : IsInjective (proj₁ IsProdOfHoms) → ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇒ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
-  secondEquiv₁ inj {x} {y} = λ eq → lift (inj (⋂kers→kerOfProd x y eq))
+  secondEquiv₁ : IsInjective (proj₁ IsProdOfHoms)
+               → ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇒ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+  secondEquiv₁ inj {x} {y} = λ eq → lift (inj (⋂kers→kerOfProd eq))
 
-  secondEquiv₂ : IsInjective (proj₁ IsProdOfHoms) → 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
+  secondEquiv₂ : IsInjective (proj₁ IsProdOfHoms)
+               → 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
   secondEquiv₂ inj {x} {y} = 0⊆∩
 
   thirdEquiv : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → famSeparatePoints 𝐁 𝓐 h
@@ -140,7 +149,7 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
       ¬0→¬∩ker  ¬0 = λ x≈y∈∩ker → ¬0 (∩→0 x≈y∈∩ker)
 
       ¬∩ker→¬kerhᵢ : {x y : Car} → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
-      ¬∩ker→¬kerhᵢ {x} {y} ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x y x≈ajy)
+      ¬∩ker→¬kerhᵢ {x} {y} ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x≈ajy)
 
       ¬x≈y→¬kerhᵢ : {x y : Car} → ¬ (x ≈ y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
       ¬x≈y→¬kerhᵢ ¬x≈y = (¬∩ker→¬kerhᵢ (¬0→¬∩ker (¬x≈y→¬0 ¬x≈y)))
