@@ -126,35 +126,44 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
  -}
   
   0⊆∩ : 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
-  0⊆∩ {x = x} {y = y} (lift xθy) j = lift (cong (proj₁ (family j)) xθy)
+  0⊆∩ (lift xθy) j = lift (cong (proj₁ (family j)) xθy)
   
   secondEquiv₁ : IsInjective (proj₁ IsProdOfHoms)
                → ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇒ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
-  secondEquiv₁ inj {x} {y} = λ eq → lift (inj (⋂kers→kerOfProd eq))
+  secondEquiv₁ inj eq = lift (inj (⋂kers→kerOfProd eq))
 
   secondEquiv₂ : IsInjective (proj₁ IsProdOfHoms)
                → 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
-  secondEquiv₂ inj {x} {y} = 0⊆∩
+  secondEquiv₂ inj = 0⊆∩
 
-  thirdEquiv : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → famSeparatePoints 𝐁 𝓐 h
-  thirdEquiv (∩→0 , 0→∩) = λ x y ¬x≈y → proj₁ (¬x≈y→¬kerhᵢ ¬x≈y) , proj₂ (¬x≈y→¬kerhᵢ ¬x≈y)
+  thirdEquiv : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+             → famSeparatePoints 𝐁 𝓐 h
+  thirdEquiv (∩→0 , _) = λ x y ¬x≈y → proj₁ (¬x≈y→¬kerhᵢ ¬x≈y)
+                                      , proj₂ (¬x≈y→¬kerhᵢ ¬x≈y)
     where
       unLiftEq : {x y : Car} → Lift ρᵅ (x ≈ y) → x ≈ y
       unLiftEq (lift p) = p
       
-      ¬x≈y→¬0 : {x y : Car} → ¬ (x ≈ y) → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
+      ¬x≈y→¬0 : {x y : Car}
+              → ¬ (x ≈ y)
+              → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
       ¬x≈y→¬0 ¬x≈y = λ x≈y∈0 → ¬x≈y (unLiftEq x≈y∈0)
 
-      ¬0→¬∩ker : {x y : Car} → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y) → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
+      ¬0→¬∩ker : {x y : Car}
+               → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
+               → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
       ¬0→¬∩ker  ¬0 = λ x≈y∈∩ker → ¬0 (∩→0 x≈y∈∩ker)
 
-      ¬∩ker→¬kerhᵢ : {x y : Car} → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
-      ¬∩ker→¬kerhᵢ {x} {y} ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x≈ajy)
+      ¬∩ker→¬kerhᵢ : {x y : Car}
+                   → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
+                   → Σ[ j ∈ I ] ¬(kerOfFam j x y)
+      ¬∩ker→¬kerhᵢ ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x≈ajy)
 
       ¬x≈y→¬kerhᵢ : {x y : Car} → ¬ (x ≈ y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
       ¬x≈y→¬kerhᵢ ¬x≈y = (¬∩ker→¬kerhᵢ (¬0→¬∩ker (¬x≈y→¬0 ¬x≈y)))
 
-  ∩⇔0→Inj : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → IsInjective (proj₁ IsProdOfHoms)
+  ∩⇔0→Inj : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+            → IsInjective (proj₁ IsProdOfHoms)
   ∩⇔0→Inj ∩=0 = firstEquiv (thirdEquiv ∩=0)
             
 {-
