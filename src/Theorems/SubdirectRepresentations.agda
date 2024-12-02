@@ -124,13 +124,25 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
 -- 𝐀 is subdirectly irreducible implies 0_A is CMI in Con 𝐀
 module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) where
   open SubdirectlyIrreducible 𝐀si renaming ( base to n𝐀
-                                         ; isSubIrr to sb
-                                         )
+                                           ; isSubIrr to sb
+                                           )
   𝐁 : Algebra α ρᵅ
   𝐁 = proj₁ n𝐀
 
+  𝐁isNonTriv : IsNonTrivialAlgebra 𝐁
+  𝐁isNonTriv = proj₂ n𝐀
+
+  x : 𝕌[ 𝐁 ]
+  x = proj₁ 𝐁isNonTriv
+
+  y : 𝕌[ 𝐁 ]
+  y = proj₁ (proj₂ 𝐁isNonTriv)
+
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B renaming (_≈_ to _≈b_)
+
+  x≠y : ¬ (x ≈b y)
+  x≠y = proj₂ (proj₂ 𝐁isNonTriv)
   
   0CMI : IsCongCMI n𝐀 (0relCong n𝐀) 
   0CMI = abs , 0=⋀P→θ=0
@@ -139,7 +151,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
       x≠y→¬x0y x≠y (lift x0y) = x≠y x0y
 
       abs : ¬ ((x y : 𝕌[ 𝐁 ]) → proj₁ (0relCong n𝐀) x y)
-      abs x=y = x≠y→¬x0y (proj₂ (proj₂ (proj₂ n𝐀))) (x=y (proj₁ (proj₂ n𝐀)) (proj₁ (proj₂ (proj₂ n𝐀))))
+      abs x=y = x≠y→¬x0y x≠y (x=y x y)
           
       0=⋀P→θ=0 : (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ)))
                → ⇔-closed n𝐀 P
@@ -269,3 +281,35 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
 
   SubIrr : SubdirectlyIrreducible {i = ov ρᵅ} {α} {ρᵅ}
   SubIrr = record { base = n𝐀 ; isSubIrr = 0→𝐀isSubIrr }
+
+{- General case of 3.23 -}
+module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓑 : I → Algebra α ρᵅ) where
+  𝐀 : Algebra α ρᵅ
+  𝐀 = proj₁ n𝐀
+
+  open Algebra 𝐀 renaming (Domain to A)
+  open Setoid A renaming (_≈_ to _≈a_)
+  𝐀isNonTriv : IsNonTrivialAlgebra 𝐀
+  𝐀isNonTriv = proj₂ n𝐀
+
+  w : 𝕌[ 𝐀 ]
+  w = proj₁ 𝐀isNonTriv
+
+  z : 𝕌[ 𝐀 ]
+  z = proj₁ (proj₂ 𝐀isNonTriv)
+
+  w≠z : ¬ (w ≈a z)
+  w≠z = proj₂ (proj₂ 𝐀isNonTriv)
+
+  quotIsNonTrivial : (θ : Con 𝐀 {ρᵅ}) → IsNonTrivialAlgebra (𝐀 ╱ θ)
+  quotIsNonTrivial θ = w , (z , λ wθz → w≠z {!!})
+    where
+      open IsCongruence (proj₂ θ) renaming ( is-equivalence to equiv )
+      open IsEquivalence equiv
+
+  quotNonTrivial : (θ : Con 𝐀 {ρᵅ}) →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
+  quotNonTrivial θ = (𝐀 ╱ θ) , quotIsNonTrivial θ
+
+  postulate
+    𝐀/θisSubIrr→θCMI : ∀ (θ : Con 𝐀 {ρᵅ}) → IsSubIrreducible (quotNonTrivial θ) 𝓑 → IsCongCMI n𝐀 θ
+    θCMI→𝐀/θisSubIrr : ∀ (θ : Con 𝐀 {ρᵅ}) → IsCongCMI n𝐀 θ → IsSubIrreducible (quotNonTrivial θ) 𝓑
