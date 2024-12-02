@@ -14,9 +14,10 @@ import Relation.Binary.Reasoning.Setoid           as SReasoning  using ( begin_ 
 
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
-open import Setoid.Homomorphisms using (hom)
+open import Setoid.Homomorphisms using (hom ; IsHom ; IsMon)
 open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆}
 open import Setoid.Relations using (0rel ; fker)
+open import Setoid.Functions using (IsInjective ; IsSurjective)
 
 open import Prod.SubdirIrreducible {𝑆 = 𝑆} using ( SubdirectlyIrreducible ; IsSubIrreducible )
 open import Prod.NatMapProps {𝑆 = 𝑆} using ( familyOfRels
@@ -216,8 +217,15 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
                                                           )
     
   0→𝐀isSubIrr :  ∀ {ix : Set (ov ρᵅ)} (fam : ix → Algebra α ρᵅ) → IsSubIrreducible n𝐀 fam
-  0→𝐀isSubIrr {ix = ix} 𝓑 g = proj₁ 0∈P , record { Hom = {!!} ; IsBij = {!!} }
+  0→𝐀isSubIrr {ix = ix} 𝓑 g = proj₁ 0∈P
+                              , record { Hom = record { compatible = comp (proj₁ 0∈P) }
+                                       ; IsBij = pi∘gInj , pi∘gSurj
+                                       }
     where
+      open IsSubEmb (proj₂ g) renaming (Mon to mono ; isSubdirProd to subp)
+      open IsMon mono renaming (isHom to gHom ; isInjective to inj)
+      open IsHom gHom renaming (compatible to comp)
+      
       congs : ∀ (j : ix) → Con (proj₁ n𝐀) {ρᵅ}
       congs j = (famOfCong (proj₁ n𝐀) 𝓑 g j)
 
@@ -246,11 +254,18 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
       iso : (j : ix) → ((proj₁ n𝐀) ╱ (congs j)) ≅ (𝓑 j)
       iso j = proj₂ (subemb→quot≅Bᵢ (proj₁ n𝐀) 𝓑 g j)
 
+      open Algebra (𝓑 (proj₁ 0∈P)) renaming (Domain to Bi)
+      open Setoid Bi renaming (_≈_ to _≈b ; isEquivalence to equiv)
+      open IsEquivalence equiv renaming (sym to bisym ; trans to bitrans)
       open _≅_ (iso (proj₁ 0∈P)) renaming (to to h)
 
-      homo : hom (proj₁ n𝐀) (𝓑 (proj₁ 0∈P))
-      homo = function (proj₁ g) (⨅-fun 𝓑 (proj₁ 0∈P))
-           , {!!}
-      
+      pi∘gInj : IsInjective (function (proj₁ g) (⨅-fun 𝓑 (proj₁ 0∈P)))
+      pi∘gInj fx=fy = lower (proj₂ (proj₂ 0∈P) fx=fy)
+
+      pi∘gSurj : IsSurjective (function (proj₁ g) (⨅-fun 𝓑 (proj₁ 0∈P)))
+      pi∘gSurj {y} with subp (proj₁ 0∈P) {y}
+      ... | Setoid.Functions.eq (bi , a , bi=ga) y=gt =
+        Setoid.Functions.eq a (bitrans y=gt (bisym (bi=ga (proj₁ 0∈P))))
+
   SubIrr : SubdirectlyIrreducible {i = ov ρᵅ} {α} {ρᵅ}
   SubIrr = record { base = n𝐀 ; isSubIrr = 0→𝐀isSubIrr }
