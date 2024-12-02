@@ -5,8 +5,8 @@ open import Level
 open import Data.Product
 open import Relation.Nullary
 open import Relation.Unary using (Pred)
-open import Relation.Binary using (Setoid ; IsEquivalence ; _⇔_)
-open import Function using (Func)
+open import Relation.Binary using (Setoid ; IsEquivalence ; _⇔_ ; Rel)
+open import Function using (Func ; id)
 open import Function.Construct.Composition using (function)
 
 open import Relation.Binary.PropositionalEquality as ≡ using ()
@@ -14,10 +14,18 @@ import Relation.Binary.Reasoning.Setoid           as SReasoning  using ( begin_ 
 
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
+open import Setoid.Homomorphisms using (hom)
+open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆}
 open import Setoid.Relations using (0rel ; fker)
 
 open import Prod.SubdirIrreducible {𝑆 = 𝑆} using ( SubdirectlyIrreducible ; IsSubIrreducible )
-open import Prod.NatMapProps {𝑆 = 𝑆} using ( familyOfRels ; NatMapIsSubEmb ; NatMap ; subemb→quot≅Bᵢ)
+open import Prod.NatMapProps {𝑆 = 𝑆} using ( familyOfRels
+                                           ; NatMapIsSubEmb
+                                           ; NatMap
+                                           ; subemb→quot≅Bᵢ
+                                           ; famOfCong
+                                           ; ∩=0
+                                           )
 open import Prod.Subdirect {𝑆 = 𝑆} using ( ⨅-fun )
 open import Prod.Subembedding {𝑆 = 𝑆}
 open import Structures.Algebras {𝑆 = 𝑆}
@@ -201,11 +209,48 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
 -- 0_A → 𝐀 is subdirectlyIrreducible
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n𝐀 (0relCong n𝐀)) where
-  0→𝐀isSubIrr :  ∀ {ix : Set i} (fam : ix → Algebra α ρᵅ) → IsSubIrreducible n𝐀 fam
-  0→𝐀isSubIrr {ix} ℬ g =  {!!} , {!!}
+  open Algebra (proj₁ n𝐀) renaming (Domain to A)
+  open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_)
+  open IsEquivalence (⇔isEq {ℓ = ρᵅ} {A = Car}) renaming ( trans to rtrans
+                                                          ; sym to rsym
+                                                          )
+    
+  0→𝐀isSubIrr :  ∀ {ix : Set (ov ρᵅ)} (fam : ix → Algebra α ρᵅ) → IsSubIrreducible n𝐀 fam
+  0→𝐀isSubIrr {ix = ix} 𝓑 g = proj₁ 0∈P , record { Hom = {!!} ; IsBij = {!!} }
     where
-      P : Pred (Con (proj₁ n𝐀) {ρᵅ}) (α ⊔ (ov ρᵅ))
-      P x = {!!} 
+      congs : ∀ (j : ix) → Con (proj₁ n𝐀) {ρᵅ}
+      congs j = (famOfCong (proj₁ n𝐀) 𝓑 g j)
 
-  SubIrr : SubdirectlyIrreducible {i} {α} {ρᵅ}
+      rels : ∀ (j : ix) → Rel Car ρᵅ
+      rels j = proj₁ (congs j)
+
+      0isInf : ⋂ᵣ {s = α ⊔ (ov ρᵅ) } ix rels ⇔ (proj₁ (0relCong n𝐀))
+      0isInf = ∩=0 (proj₁ n𝐀) 𝓑 g
+
+      P : Pred (Con (proj₁ n𝐀) {ρᵅ}) (α ⊔ (ov ρᵅ))
+      P x = Σ[ j ∈ ix ] proj₁ x ⇔ rels j
+
+      Pisclosed : ⇔-closed n𝐀 P
+      Pisclosed x y (j , x=θⱼ) x=y = j , (rtrans (rsym x=y) x=θⱼ) 
+        
+      ∩⇔⋀ : ⋂ᵣ {s = α ⊔ (ov ρᵅ) } ix rels ⇔ proj₁ (⋀c (proj₁ n𝐀) P)
+      ∩⇔⋀ = (λ {xy∈∩ R (j , R=xj) → proj₂ R=xj (lower (xy∈∩ j))})
+            , λ xy∈⋀ i → lift (xy∈⋀ (congs i) (i , id , id))
+
+      0⇔⋀ : proj₁ (⋀c (proj₁ n𝐀) P) ⇔ proj₁ (0relCong n𝐀) 
+      0⇔⋀ = ⇔hetTrans (⇔hetSym ∩⇔⋀) 0isInf 
+        
+      0∈P : P (0relCong n𝐀)
+      0∈P = proj₂ 0cmi P Pisclosed 0⇔⋀
+
+      iso : (j : ix) → ((proj₁ n𝐀) ╱ (congs j)) ≅ (𝓑 j)
+      iso j = proj₂ (subemb→quot≅Bᵢ (proj₁ n𝐀) 𝓑 g j)
+
+      open _≅_ (iso (proj₁ 0∈P)) renaming (to to h)
+
+      homo : hom (proj₁ n𝐀) (𝓑 (proj₁ 0∈P))
+      homo = function (proj₁ g) (⨅-fun 𝓑 (proj₁ 0∈P))
+           , {!!}
+      
+  SubIrr : SubdirectlyIrreducible {i = ov ρᵅ} {α} {ρᵅ}
   SubIrr = record { base = n𝐀 ; isSubIrr = 0→𝐀isSubIrr }
