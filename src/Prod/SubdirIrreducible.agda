@@ -30,11 +30,13 @@ module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓐 : 
   𝐀 = proj₁ n𝐀
   
   IsSubIrreducible : Set (ov (i ⊔ α ⊔ ρᵅ))
-  IsSubIrreducible  = (h : SubdirectEmbedding 𝐀 𝓐) → Σ[ j ∈ I ] IsIso 𝐀 (𝓐 j) (function (proj₁ h) (⨅-fun 𝓐 j))
+  IsSubIrreducible  = (h : SubdirectEmbedding 𝐀 𝓐)
+                    → Σ[ j ∈ I ]  IsIso 𝐀 (𝓐 j) (function (proj₁ h) (⨅-fun 𝓐 j))
       
 
 record SubdirectlyIrreducible : Set (ov (i ⊔ α ⊔ ρᵅ)) where
   field
     base : NonTrivialAlgebra {β = α} {ρ = ρᵅ}
-    isSubIrr : ∀ {ix : Set i} (family : ix → Algebra α ρᵅ) →  IsSubIrreducible base family
+    isSubIrr : ∀ {I : Set i} (𝓐 : I → Algebra α ρᵅ)
+             →  IsSubIrreducible base 𝓐
 

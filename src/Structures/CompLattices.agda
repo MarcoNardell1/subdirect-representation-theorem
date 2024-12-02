@@ -24,10 +24,10 @@ module _ (𝐀 : Algebra α ρᵅ) where
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈ₐ_)
 
   _≈c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
-  θᵢ ≈c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇔ proj₁ θⱼ)) -- (proj₁ θᵢ ⇔ proj₁ θⱼ)
+  θᵢ ≈c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇔ proj₁ θⱼ))
 
   _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
-  θᵢ ⊆c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇒ proj₁ θⱼ)) -- (proj₁ θᵢ ⇒ proj₁ θⱼ)
+  θᵢ ⊆c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇒ proj₁ θⱼ))
 
   ≈-isEquiv : IsEquivalence _≈c_
   ≈-isEquiv = record { refl = lift ((λ xθy → xθy) , λ xθy → xθy)
@@ -56,12 +56,12 @@ module _ (𝐀 : Algebra α ρᵅ) where
                         ; isPartialOrder = ⊆-isPartialOrder
                         }
 
-  open Poset PosetOfCong renaming (_≤_ to _≤c_
+  open Poset PosetOfCong renaming ( _≤_ to _≤c_
                                   ; Carrier to Cg
                                   )
   
   -- The meet operation of the Lattice of Congruences is the arbitrary intersection. 
-  ⋀c : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)) → Con 𝐀 {α ⊔ (ov ρᵅ)} -- Op (Con 𝐀 {ρᵅ}) {α ⊔ ρᵅ}
+  ⋀c : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)) → Con 𝐀 {α ⊔ (ov ρᵅ)}
   ⋀c  X = _∼_ , ∼Cong
     where
       -- Defining the relation of intersection of Congruences
@@ -70,7 +70,7 @@ module _ (𝐀 : Algebra α ρᵅ) where
 
       -- Proving that the intersection of congruences is a congruence
       x≈y→x∼y : {x y :  𝕌[ 𝐀 ]} → x ≈ₐ y → x ∼ y
-      x≈y→x∼y x=y R R∈X = Rreflexive x=y
+      x≈y→x∼y x=y R _ = Rreflexive x=y
         where
           open IsCongruence (proj₂ R) renaming (reflexive to Rreflexive) 
 
@@ -116,13 +116,12 @@ module _ (𝐀 : Algebra α ρᵅ) where
   No podemos definir InfExists para todo subconjunto de X dado que X esta en un nivel mas alto que las relaciones binarias.
   Por lo que seria necesario liftear todas las operaciones para poder trabajar con dichos niveles. 
 -}
-{-
   -- Proving that ⋀c is a lower bound for every subset of congruences
-  InfIsLowerBound : (X : Pred (Con 𝐀 {α ⊔ (ov ρᵅ)}) (α ⊔ (ov ρᵅ)))
-                  → ∀ (R : Con 𝐀 {α ⊔ (ov ρᵅ)})
+  InfIsLowerBound : (X : Pred (Con 𝐀 { ρᵅ}) (α ⊔ (ov ρᵅ)))
+                  → ∀ (R : Con 𝐀 {ρᵅ})
                   → X R
                   → ∀ {x y : Car} → (proj₁ (⋀c X)) x y → (proj₁ R) x y 
-  InfIsLowerBound X R R∈X ∩X = ∩X R R∈X
+  InfIsLowerBound _ R R∈X ∩X = ∩X R R∈X
 
   InfIsGreatLB : (X : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)))
                → ∀ (ϕ : Con 𝐀 {ρᵅ})
@@ -130,7 +129,7 @@ module _ (𝐀 : Algebra α ρᵅ) where
                → ∀ {x y : Car} → (proj₁ ϕ) x y 
                → (proj₁ (⋀c X)) x y    
   InfIsGreatLB X ϕ LB xϕy R R∈X = lower (LB R R∈X) xϕy -- LB R R∈X xϕy
-
+{-
   InfExists : (X : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))) → IsInfimum _≤c_ X {!!} 
   InfExists X = {!!}
     where

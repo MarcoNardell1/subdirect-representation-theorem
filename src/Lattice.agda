@@ -266,29 +266,22 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
           a<a = proj₂ p X XisClosed (CL.Eq.sym a=c')
     
   cover→CMI : (a : Carrier)
-            → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))  → IsCMI a
-  cover→CMI a (c' , (a<c , p)) = <CL-not1 a c' a<c
-                               , λ P PisClosed inf≈a
-                                   → absurd (P a) (λ a∉P
-                                                     → <CL-irr a
-                                                              (a<a P
-                                                                   PisClosed
-                                                                   (CL.Eq.sym inf≈a
-                                                                    , a∉P
-                                                                    )
-                                                                )
-                                                    )
+            → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
+            → IsCMI a
+  cover→CMI a (c' , (a<c , p)) = <CL-not1 a c' a<c , aIsCMI
     where
-
       a<x : ∀ (X : Pred Carrier ℓ₁) (x : Carrier)
           → ≈-closed X
           → a ≈ (⋀ X) × ¬ (X a)
           → X x → a ≤ x
           → a <CL x
-      a<x X x XClosed (a≈inf , a∉X) x∈X a≤x = a≤x , λ a≈x → a∉X (a∈X x∈X a≈x)
+      a<x X x XClosed (_ , a∉X) x∈X a≤x = a≤x , a≠x
         where
           a∈X : X x → a ≈ x → X a
           a∈X x∈X a≈x = XClosed x a x∈X (CL.Eq.sym a≈x)
+
+          a≠x : ¬ (a ≈ x)
+          a≠x a=x = a∉X (a∈X x∈X a=x) 
 
       c≤inf : ∀ (X : Pred Carrier ℓ₁)
             → ≈-closed X
@@ -302,7 +295,9 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
                                          XClosed
                                          (a≈inf , a∉X)
                                          y∈X
-                                         (≤-eqˡ (meetL X y y∈X) (CL.Eq.sym a≈inf))
+                                         (≤-eqˡ (meetL X y y∈X)
+                                                (CL.Eq.sym a≈inf)
+                                         )
                                      )
 
       a<a : ∀ (X : Pred Carrier ℓ₁)
@@ -313,7 +308,14 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
                                   c'
                                   a
                                   (a<c , ≤-eq (c≤inf X XClosed p)
-                                  (CL.Eq.sym (proj₁ p)))
+                                              (CL.Eq.sym (proj₁ p))
+                                  )
+
+      aIsCMI : ∀ (P : Pred Carrier ℓ₁) → ≈-closed P → (⋀ P) ≈ a → P a
+      aIsCMI P PClosed inf = absurd (P a) abs
+        where
+          abs : ¬ (P a) → ⊥
+          abs a∉P = <CL-irr a (a<a P PClosed (CL.Eq.sym inf , a∉P))
       
 -- open MeetIrreducible
 
