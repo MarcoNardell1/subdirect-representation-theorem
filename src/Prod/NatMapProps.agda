@@ -208,8 +208,8 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
     
 
   -- Given a family of congruences we take the binary relation of each congruence
-  familyOfRels : (I → Con 𝐀 {ρᵅ}) → I → BinRel Car ρᵅ
-  familyOfRels θ = λ i → proj₁ (θ i) 
+  familyOfRels :  I → BinRel Car ρᵅ
+  familyOfRels i = proj₁ (θ i) 
 
   -- defining the family of homomorphisms ⟨hᵢ : 𝐀 → 𝐀／(θ i), ∀ i  ∈ I ⟩ 
   natHomMap : FamOfHoms 𝐀 famOfQuot
@@ -273,7 +273,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
 
   -- First statement of proposition 
   NatMapIsSubEmb :
-    (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
+    (⋂ᵣ {s = α ⊔ i} I familyOfRels ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfQuot  NatMap
   NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
                                             ; isSubdirProd = DirImageIsSubEmb 

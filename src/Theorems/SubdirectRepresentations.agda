@@ -91,7 +91,6 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                         ; trans = λ x0y y0z → lift (atrans (lower x0y) (lower y0z))
                         }
 
-      open IsEquivalence 0isEquiv renaming (refl to 0refl ; sym to 0sym ; trans to 0trans)
       0comp : (proj₁ n𝐀) ∣≈ 0rel {𝐴 = A} {𝐵 = A} {ℓ = ρᵅ}
       0comp 𝑓 {x} {y} x0y = lift
         (begin
@@ -110,16 +109,14 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
 -- Redifining an element is completelyMeetIrreducible
 {- Using this avoids the use of CongCompleteLattice -}
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
-  𝐂 : Algebra α ρᵅ
-  𝐂 = proj₁ n𝐀
+  base : Algebra α ρᵅ
+  base = proj₁ n𝐀
 
-  open Algebra 𝐂 renaming (Domain to C)
-  open Setoid C renaming (_≈_ to _≈a_)
-  ⇔-closed : ∀ (P : Pred (Con 𝐂 {ρᵅ}) (α ⊔ (ov ρᵅ))) → Set (α ⊔ (ov ρᵅ))
+  ⇔-closed : ∀ (P : Pred (Con base {ρᵅ}) (α ⊔ (ov ρᵅ))) → Set (α ⊔ (ov ρᵅ))
   ⇔-closed P = ∀ x y → P x → (proj₁ x) ⇔ (proj₁ y) → P y
   
-  IsCongCMI : ∀ (C : Con 𝐂 {ρᵅ}) → Set (suc (α ⊔ (ov ρᵅ)))
-  IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c 𝐂 P) ⇔ (proj₁ C) → P C)
+  IsCongCMI : ∀ (C : Con base {ρᵅ}) → Set (suc (α ⊔ (ov ρᵅ)))
+  IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c base P) ⇔ (proj₁ C) → P C)
 
 -- 𝐀 is subdirectly irreducible implies 0_A is CMI in Con 𝐀
 module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) where
@@ -137,7 +134,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
   y : 𝕌[ 𝐁 ]
   y = proj₁ (proj₂ 𝐁isNonTriv)
-
+  
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B renaming (_≈_ to _≈b_)
 
@@ -148,10 +145,10 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
   0CMI = abs , 0=⋀P→θ=0
     where
       x≠y→¬x0y : ∀ {x y : 𝕌[ 𝐁 ]} → ¬ (x ≈b y) → ¬ (proj₁ (0relCong n𝐀) x y)
-      x≠y→¬x0y x≠y (lift x0y) = x≠y x0y
+      x≠y→¬x0y ¬x=y (lift x0y) = ¬x=y x0y
 
       abs : ¬ ((x y : 𝕌[ 𝐁 ]) → proj₁ (0relCong n𝐀) x y)
-      abs x=y = x≠y→¬x0y x≠y (x=y x y)
+      abs x0y = x≠y→¬x0y x≠y (x0y x y)
           
       0=⋀P→θ=0 : (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ)))
                → ⇔-closed n𝐀 P
@@ -169,21 +166,21 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
 
           {- defining the family of algebras as the quotients of P-}
           quotAlgs : ix → Algebra α ρᵅ
-          quotAlgs j = 𝐁 ╱ (proj₁ j)
+          quotAlgs j = 𝐁 ╱ (CongIx j)
 
           {- proving that infimum operator is equal to arbitrary intersection -}
-          ⋀P=∩P : ⋂ᵣ {s = ρᵅ} ix (familyOfRels 𝐁 CongIx CongIx) ⇔ proj₁ (0relCong n𝐀)
+          ⋀P=∩P : ⋂ᵣ {s = ρᵅ} ix (familyOfRels 𝐁 CongIx) ⇔ proj₁ (0relCong n𝐀)
           ⋀P=∩P = (λ x∈∩P → proj₁ ⋀P=0 λ R R∈P → lower (x∈∩P (R , R∈P)))
-                , λ x0y (R , R∈P)→ lift (proj₂ ⋀P=0 x0y R R∈P)
+                , λ x0y (R , R∈P) → lift (proj₂ ⋀P=0 x0y R R∈P)
 
           {- with the previous results we can use the first part of Proposition 3.17 to
           define a subdirect embedding using the natural map of an algebra to the product of
           its quotient algebras, in this case ⨅ quotAlgs. -}
-          natMap : IsSubEmb 𝐁 quotAlgs (NatMap 𝐁 CongIx) 
-          natMap = NatMapIsSubEmb 𝐁 CongIx ⋀P=∩P
+          natMapIsSubEmb : IsSubEmb 𝐁 quotAlgs (NatMap 𝐁 CongIx) 
+          natMapIsSubEmb = NatMapIsSubEmb 𝐁 CongIx ⋀P=∩P
 
           subemb : SubdirectEmbedding 𝐁 quotAlgs
-          subemb = NatMap 𝐁 CongIx , natMap
+          subemb = NatMap 𝐁 CongIx , natMapIsSubEmb
 
           {- because of 𝐀 is a subdirectly irreducible algebra,for some i ∈ I we have an isomorphism of pᵢ ∘ h,
             for all subdirect embedding h. Now we have to check that pᵢ is an iso.-}
@@ -191,34 +188,35 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
           projIsIso : Σ[ j ∈ ix ] (IsIso 𝐁 (quotAlgs j) (function (proj₁ subemb) (⨅-fun quotAlgs j)))
           projIsIso = sb quotAlgs subemb
 
+          indexOfProj : ix
+          indexOfProj = proj₁ projIsIso
+
           open IsIso (proj₂ projIsIso) renaming ( Hom to h ; IsBij to bj)
           {- Now we have to prove that 0_A = ker (pᵢ ∘ NatMap) = θᵢ. We are going to split this in three checks
             1. 0_A = ker (pᵢ ∘ NatMap)
             2. ker (pᵢ ∘ NatMap) = θᵢ
             3. 0_A = θᵢ
           -}
-          0=kerProj : Σ[ j ∈ ix ] (proj₁ (0relCong n𝐀) ⇔ (fker (function (proj₁ subemb) (⨅-fun quotAlgs j))))
-          0=kerProj = (proj₁ (sb quotAlgs subemb))
-                     , (λ x0y → cong (function (proj₁ subemb) (⨅-fun quotAlgs (proj₁ projIsIso))) (lower x0y))
+          0=kerProj : (proj₁ (0relCong n𝐀)
+                    ⇔ (fker (function (proj₁ subemb) (⨅-fun quotAlgs indexOfProj))))
+          0=kerProj =  (λ x0y → cong (function (proj₁ subemb)
+                                                (⨅-fun quotAlgs (proj₁ projIsIso)))
+                                      (lower x0y))
                      , λ xy∈ker → lift (proj₁ bj xy∈ker)
 
-          kerProj=θᵢ : Σ[ j ∈ ix ] (fker (function (proj₁ subemb) (⨅-fun quotAlgs j)) ⇔ proj₁ (proj₁ j))
-          kerProj=θᵢ = proj₁ (sb quotAlgs subemb)
-                     , (λ xy∈ker → xy∈ker)
-                     , λ xθᵢy → xθᵢy
+          kerProj=θᵢ : (fker (function (proj₁ subemb) (⨅-fun quotAlgs indexOfProj))
+                     ⇔ proj₁ (proj₁ indexOfProj))
+          kerProj=θᵢ = id , id
 
-          0=θᵢ : Σ[ j ∈ ix ] (proj₁ (0relCong n𝐀) ⇔ proj₁ (proj₁ j))
-          0=θᵢ = (proj₁ (sb quotAlgs subemb))
-               , (λ x0y → proj₁ (proj₂ kerProj=θᵢ) (proj₁ (proj₂ 0=kerProj) x0y))
-               , λ xθᵢy → proj₂ (proj₂ 0=kerProj) (proj₂ (proj₂ kerProj=θᵢ) xθᵢy)
+          0=θᵢ : (proj₁ (0relCong n𝐀) ⇔ proj₁ (proj₁ indexOfProj))
+          0=θᵢ = ⇔hetTrans 0=kerProj kerProj=θᵢ
 
           {- Because 0=θᵢ then 0 ∈ P, so 0 is completely meet irreducible -}
           0∈P : P (0relCong n𝐀)
-          0∈P = Pclosed (proj₁ (proj₁ 0=θᵢ))
+          0∈P = Pclosed (proj₁ indexOfProj)
                         (0relCong n𝐀)
-                        (proj₂ (proj₁ 0=θᵢ))
-                        (proj₂ (proj₂ 0=θᵢ) , proj₁ (proj₂ 0=θᵢ))
-
+                        (proj₂ indexOfProj)
+                        (⇔hetSym 0=θᵢ) 
 
 -- 0_A → 𝐀 is subdirectlyIrreducible
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n𝐀 (0relCong n𝐀)) where
@@ -283,6 +281,9 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
   SubIrr = record { base = n𝐀 ; isSubIrr = 0→𝐀isSubIrr }
 
 {- General case of 3.23 -}
+{- Here the congruence θ can't be 1_A because 1_A is not completely meet irreducible on Con 𝐀.
+Also, 𝐀/1_A is a trivial algebra because there is only one equivalence class on 𝐀.
+-}
 module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓑 : I → Algebra α ρᵅ) where
   𝐀 : Algebra α ρᵅ
   𝐀 = proj₁ n𝐀
@@ -301,15 +302,17 @@ module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓑 : 
   w≠z : ¬ (w ≈a z)
   w≠z = proj₂ (proj₂ 𝐀isNonTriv)
 
-  quotIsNonTrivial : (θ : Con 𝐀 {ρᵅ}) → IsNonTrivialAlgebra (𝐀 ╱ θ)
-  quotIsNonTrivial θ = w , (z , λ wθz → w≠z {!!})
+  -- agregar que θ no es ⊤ 
+  quotIsNonTrivial : (θ : Con 𝐀 {ρᵅ}) → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y) → IsNonTrivialAlgebra (𝐀 ╱ θ)
+  quotIsNonTrivial θ θ≠1 = w , (z , λ wθz → {!!})
     where
       open IsCongruence (proj₂ θ) renaming ( is-equivalence to equiv )
       open IsEquivalence equiv
-
-  quotNonTrivial : (θ : Con 𝐀 {ρᵅ}) →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
-  quotNonTrivial θ = (𝐀 ╱ θ) , quotIsNonTrivial θ
+{-
+  quotNonTrivial : (θ : Con 𝐀 {ρᵅ}) → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y) →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
+  quotNonTrivial θ θ≠1 = (𝐀 ╱ θ) , quotIsNonTrivial θ θ≠1
 
   postulate
     𝐀/θisSubIrr→θCMI : ∀ (θ : Con 𝐀 {ρᵅ}) → IsSubIrreducible (quotNonTrivial θ) 𝓑 → IsCongCMI n𝐀 θ
     θCMI→𝐀/θisSubIrr : ∀ (θ : Con 𝐀 {ρᵅ}) → IsCongCMI n𝐀 θ → IsSubIrreducible (quotNonTrivial θ) 𝓑
+-}
