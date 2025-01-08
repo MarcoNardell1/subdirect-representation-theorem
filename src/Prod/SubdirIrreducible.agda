@@ -24,19 +24,18 @@ private variable α ρᵅ i : Level
   there is a j ∈ I such that pⱼ ∘ h : 𝐀 → 𝐀ⱼ is an isomorphism. 
 -}
 
-module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓐 : I → Algebra α ρᵅ) where
+module _  (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
 
   𝐀 : Algebra α ρᵅ
   𝐀 = proj₁ n𝐀
   
-  IsSubIrreducible : Set (ov (i ⊔ α ⊔ ρᵅ))
-  IsSubIrreducible  = (h : SubdirectEmbedding 𝐀 𝓐)
+  IsSubIrreducible : ∀ {i} → Set (ov (i ⊔ α ⊔ ρᵅ))
+  IsSubIrreducible {i} = {I : Set i} (𝓐 : I → Algebra α ρᵅ) → (h : SubdirectEmbedding 𝐀 𝓐)
                     → Σ[ j ∈ I ]  IsIso 𝐀 (𝓐 j) (function (proj₁ h) (⨅-fun 𝓐 j))
       
 
 record SubdirectlyIrreducible : Set (ov (i ⊔ α ⊔ ρᵅ)) where
   field
     base : NonTrivialAlgebra {β = α} {ρ = ρᵅ}
-    isSubIrr : ∀ {I : Set i} (𝓐 : I → Algebra α ρᵅ)
-             →  IsSubIrreducible base 𝓐
+    isSubIrr : IsSubIrreducible base {i}
 

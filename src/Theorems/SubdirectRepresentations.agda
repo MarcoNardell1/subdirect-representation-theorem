@@ -81,7 +81,6 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                          ; sym to asym
                          ; trans to atrans
                          )
-  
   0relCong : Con (proj₁ n𝐀) {ρᵅ}
   0relCong = 0rel {𝐴 = A} {𝐵 = A} {ℓ = ρᵅ} , isCong
     where
@@ -105,6 +104,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                       ; is-equivalence = 0isEquiv
                       ; is-compatible =  0comp
                       }
+  
 
 -- Redifining an element is completelyMeetIrreducible
 {- Using this avoids the use of CongCompleteLattice -}
@@ -226,11 +226,12 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
                                                           ; sym to rsym
                                                           )
     
-  0→𝐀isSubIrr :  ∀ {ix : Set (ov ρᵅ)} (fam : ix → Algebra α ρᵅ) → IsSubIrreducible n𝐀 fam
-  0→𝐀isSubIrr {ix = ix} 𝓑 g = proj₁ 0∈P
-                              , record { Hom = record { compatible = comp (proj₁ 0∈P) }
-                                       ; IsBij = pi∘gInj , pi∘gSurj
-                                       }
+  0→𝐀isSubIrr : IsSubIrreducible n𝐀 {i = ov ρᵅ}
+  0→𝐀isSubIrr {I = ix} 𝓑 g =  proj₁ 0∈P
+                               , record { Hom = record { compatible = comp (proj₁ 0∈P) }
+                                        ; IsBij = pi∘gInj , pi∘gSurj
+                                        }
+
     where
       open IsSubEmb (proj₂ g) renaming (Mon to mono ; isSubdirProd to subp)
       open IsMon mono renaming (isHom to gHom ; isInjective to inj)
@@ -249,7 +250,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
       P x = Σ[ j ∈ ix ] proj₁ x ⇔ rels j
 
       Pisclosed : ⇔-closed n𝐀 P
-      Pisclosed x y (j , x=θⱼ) x=y = j , (rtrans (rsym x=y) x=θⱼ) 
+      Pisclosed _ _ (j , x=θⱼ) x=y = j , (rtrans (rsym x=y) x=θⱼ) 
         
       ∩⇔⋀ : ⋂ᵣ {s = α ⊔ (ov ρᵅ) } ix rels ⇔ proj₁ (⋀c (proj₁ n𝐀) P)
       ∩⇔⋀ = (λ {xy∈∩ R (j , R=xj) → proj₂ R=xj (lower (xy∈∩ j))})
@@ -284,35 +285,36 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n�
 {- Here the congruence θ can't be 1_A because 1_A is not completely meet irreducible on Con 𝐀.
 Also, 𝐀/1_A is a trivial algebra because there is only one equivalence class on 𝐀.
 -}
-module _ {I : Set i} (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (𝓑 : I → Algebra α ρᵅ) where
+
+-- prerequisites
+module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   𝐀 : Algebra α ρᵅ
   𝐀 = proj₁ n𝐀
 
-  open Algebra 𝐀 renaming (Domain to A)
-  open Setoid A renaming (_≈_ to _≈a_)
-  𝐀isNonTriv : IsNonTrivialAlgebra 𝐀
-  𝐀isNonTriv = proj₂ n𝐀
-
-  w : 𝕌[ 𝐀 ]
-  w = proj₁ 𝐀isNonTriv
-
-  z : 𝕌[ 𝐀 ]
-  z = proj₁ (proj₂ 𝐀isNonTriv)
-
-  w≠z : ¬ (w ≈a z)
-  w≠z = proj₂ (proj₂ 𝐀isNonTriv)
-
-  -- agregar que θ no es ⊤ 
-  quotIsNonTrivial : (θ : Con 𝐀 {ρᵅ}) → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y) → IsNonTrivialAlgebra (𝐀 ╱ θ)
-  quotIsNonTrivial θ θ≠1 = w , (z , λ wθz → {!!})
+  non1Cong : Set (ov ρᵅ ⊔ α)
+  non1Cong = Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ] ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
+  
+  quotIsNonTrivial : (θ : non1Cong) 
+                   → IsNonTrivialAlgebra (𝐀 ╱ (proj₁ θ))
+  quotIsNonTrivial (θ , θ≠1) = 2Neg
     where
       open IsCongruence (proj₂ θ) renaming ( is-equivalence to equiv )
       open IsEquivalence equiv
-{-
-  quotNonTrivial : (θ : Con 𝐀 {ρᵅ}) → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y) →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
-  quotNonTrivial θ θ≠1 = (𝐀 ╱ θ) , quotIsNonTrivial θ θ≠1
 
+      1Neg : Σ[ x ∈ 𝕌[ 𝐀 ] ] (¬ ∀ (y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
+      1Neg = ¬∀→∃¬ θ≠1
+
+      2Neg : Σ[ x ∈ 𝕌[ 𝐀 ] ] (Σ[ y ∈ 𝕌[ 𝐀 ] ] (¬ (proj₁ θ) x y))
+      2Neg = proj₁ 1Neg , ¬∀→∃¬ (proj₂ 1Neg)
+      
+  quotNonTrivial : (θ : non1Cong)
+                 →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
+  quotNonTrivial θ = (𝐀 ╱ (proj₁ θ)) , quotIsNonTrivial θ
+
+module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   postulate
-    𝐀/θisSubIrr→θCMI : ∀ (θ : Con 𝐀 {ρᵅ}) → IsSubIrreducible (quotNonTrivial θ) 𝓑 → IsCongCMI n𝐀 θ
-    θCMI→𝐀/θisSubIrr : ∀ (θ : Con 𝐀 {ρᵅ}) → IsCongCMI n𝐀 θ → IsSubIrreducible (quotNonTrivial θ) 𝓑
--}
+    𝐀/θisSubIrr→θCMI : ∀ (θ : non1Cong n𝐀) → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i} → IsCongCMI n𝐀 (proj₁ θ)
+    θCMI→𝐀/θisSubIrr : ∀ (θ : non1Cong n𝐀) → IsCongCMI n𝐀 (proj₁ θ) → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i}
+
+
+
