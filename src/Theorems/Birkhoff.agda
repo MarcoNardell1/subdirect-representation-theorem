@@ -14,7 +14,7 @@ import Relation.Binary.Reasoning.Setoid           as SReasoning  using ( begin_ 
 
 
 open import Setoid.Algebras  {𝑆 = 𝑆}
-open import Setoid.Homomorphisms using (hom ; IsHom ; IsMon)
+open import Setoid.Homomorphisms using (hom ; IsHom ; IsMon ; compatible-map)
 open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆}
 open import Setoid.Relations using (0rel ; fker)
 open import Setoid.Functions using (IsInjective ; IsSurjective)
@@ -39,7 +39,7 @@ open import Utils.Axioms
 open import Utils.Definitions
 
 private variable α ρᵅ i : Level
-
+open Func renaming (f to _⟨$⟩_)
 {-
 Theorem:
 Every nontrivial algebra is isomorphic to a subdirect product of subdirectly irreducible algebras
@@ -51,7 +51,8 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   𝐀 = proj₁ n𝐀
 
   open Algebra 𝐀 renaming (Domain to A)
-  open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_)
+  open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equiv)
+  open IsEquivalence equiv renaming (refl to Arefl)
 
   -- Seria existe x, existe y tales que x ≠ y
   I : Set (α ⊔ ρᵅ)
@@ -104,7 +105,50 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
 
   subEmb : IsSubEmb 𝐀 fam natSubIrrMap
   subEmb = NatMapIsSubEmb 𝐀 famOfCongs ∩abθab⇔0A
- 
-  {- TODO :
-   4. Prove that HomImageOf[ g ] ≅ 𝐀, where g is the natural map given by 3.17
-  -}
+
+  open IsSubEmb subEmb renaming (Mon to natMapmon)
+  open IsMon natMapmon renaming (isHom to NMhom ; isInjective to inj)
+  open IsHom NMhom renaming (compatible to comp)
+
+  g𝐀 : Algebra (α ⊔ (α ⊔ (α ⊔ ρᵅ)) ⊔ (ρᵅ ⊔ (α ⊔ ρᵅ))) (ρᵅ ⊔ (α ⊔ ρᵅ))
+  g𝐀 = genAlgFromMon 𝐀 fam (natSubIrrMap , natMapmon)
+
+  open Algebra g𝐀 renaming (Domain to gA)
+  open Setoid gA renaming (Carrier to gCar)
+  
+  𝐀≅g𝐀 : Iso 𝐀 g𝐀
+  𝐀≅g𝐀 = F , record { Hom = FisHom
+                     ; IsBij = FisInjective , FisSurjective
+                     }
+    where
+      f : Car → gCar
+      f x  = iMap , x , xθix
+        where
+          iMap : (i : I) → 𝕌[ (fam i) ]
+          iMap i = (natSubIrrMap ⟨$⟩ x) i
+
+          xθix : (i : I) →  proj₁ (proj₁ (θabCMI i)) x x
+          xθix i = θreflexive Arefl
+            where
+              open IsCongruence (proj₂ (proj₁ (θabCMI i))) renaming (reflexive to θreflexive)
+       
+      F : Func A gA
+      F = record { f = f ; cong = λ x=y i → cong natSubIrrMap x=y i } 
+
+      FisCompatible : compatible-map 𝐀 g𝐀 F
+      FisCompatible i = comp i
+      
+      FisHom : IsHom 𝐀 g𝐀 F
+      FisHom = record { compatible = FisCompatible }
+
+      FisInjective : IsInjective F
+      FisInjective = inj
+
+      FisSurjective : IsSurjective F
+      FisSurjective {iMap , x , fix=imap } = Setoid.Functions.eq x imapθfx
+        where
+          imapθfx : (i : I) → proj₁ (proj₁ (θabCMI i)) (iMap i) x
+          imapθfx i = θisym (fix=imap i)
+            where
+              open IsCongruence (proj₂ (proj₁ (θabCMI i))) renaming (is-equivalence to θiequiv)
+              open IsEquivalence θiequiv renaming (sym to θisym)
