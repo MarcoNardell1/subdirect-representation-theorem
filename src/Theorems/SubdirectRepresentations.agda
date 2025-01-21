@@ -218,7 +218,7 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
                         (proj₂ indexOfProj)
                         (⇔hetSym 0=θᵢ) 
 
--- 0_A → 𝐀 is subdirectlyIrreducible
+-- 0_A CMI → 𝐀 is subdirectlyIrreducible
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) (0cmi : IsCongCMI n𝐀 (0relCong n𝐀)) where
   open Algebra (proj₁ n𝐀) renaming (Domain to A)
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_)
@@ -291,9 +291,11 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   𝐀 : Algebra α ρᵅ
   𝐀 = proj₁ n𝐀
 
+-- No trivial congruences 
   non1Cong : Set (ov ρᵅ ⊔ α)
   non1Cong = Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ] ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
-  
+
+-- With a non trivial congruence, the quotient algebra is not rivial
   quotIsNonTrivial : (θ : non1Cong) 
                    → IsNonTrivialAlgebra (𝐀 ╱ (proj₁ θ))
   quotIsNonTrivial (θ , θ≠1) = 2Neg
@@ -311,10 +313,15 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                  →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
   quotNonTrivial θ = (𝐀 ╱ (proj₁ θ)) , quotIsNonTrivial θ
 
+-- Then postulating the general case
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   postulate
-    𝐀/θisSubIrr→θCMI : ∀ (θ : non1Cong n𝐀) → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i} → IsCongCMI n𝐀 (proj₁ θ)
-    θCMI→𝐀/θisSubIrr : ∀ (θ : non1Cong n𝐀) → IsCongCMI n𝐀 (proj₁ θ) → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i}
+    𝐀/θisSubIrr→θCMI : ∀ (θ : non1Cong n𝐀)
+                      → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i}
+                      → IsCongCMI n𝐀 (proj₁ θ)
+    θCMI→𝐀/θisSubIrr : ∀ (θ : non1Cong n𝐀)
+                      → IsCongCMI n𝐀 (proj₁ θ)
+                      → IsSubIrreducible (quotNonTrivial n𝐀 θ) {i = i}
 
 
 

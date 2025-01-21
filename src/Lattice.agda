@@ -154,14 +154,11 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
 
   𝐋 : Lattice c ℓ₁ ℓ₁
   𝐋 = CompleteLatticeIsLattice CL
-  open Lattice 𝐋 renaming ( Carrier to A
-                          ; _≈_ to _≈l_
-                          ; _≤_ to _≤l_
-                          )
+  open Lattice 𝐋 using (_∨_ ; _∧_)
 
   -- Check if an element is meet-irreducible
   IsMI : Pred Carrier _
-  IsMI x = ∀ b c → x ≈l (b ∧ c) → (x ≈l b) ⊎ (x ≈l c)
+  IsMI x = ∀ b c → x ≈ (b ∧ c) → (x ≈ b) ⊎ (x ≈ c)
 
   -- check if an element is completely meet-irreducible
   ≈-closed : ∀ {ℓ} (P : Pred Carrier ℓ) → Set (c ⊔ ℓ₁ ⊔ ℓ)
@@ -243,21 +240,21 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   -}
   CMI→Cover : (a : Carrier)
             → IsCMI a
-            → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
+            → ∃[ c ] ((a <CL c) × (∀ (x : Carrier) → a <CL x → c ≤ x))
   CMI→Cover a p = c' , (LB≤⋀ X a aIsLowerBound , abs) , meetL X
     where
     
       X : Pred Carrier ℓ₁
-      X = λ x → a <CL x
+      X x = a <CL x
 
       XisClosed : ≈-closed X
-      XisClosed = λ x y Xx x≈y → <CL-eq a x y Xx x≈y
+      XisClosed x y Xx x≈y = <CL-eq a x y Xx x≈y
       
-      c' : A
+      c' : Carrier
       c' = ⋀ X
 
       aIsLowerBound : IsLowerBound _≤_ X a
-      aIsLowerBound y a≤y = proj₁ a≤y
+      aIsLowerBound y a<y = proj₁ a<y
 
       abs : a ≈ c' → ⊥
       abs a=c' = <CL-irr a a<a
@@ -266,7 +263,7 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
           a<a = proj₂ p X XisClosed (CL.Eq.sym a=c')
     
   cover→CMI : (a : Carrier)
-            → ∃[ c ] ((a <CL c) × (∀ (x : A) → a <CL x → c ≤ x))
+            → ∃[ c ] ((a <CL c) × (∀ (x : Carrier) → a <CL x → c ≤ x))
             → IsCMI a
   cover→CMI a (c' , (a<c , p)) = <CL-not1 a c' a<c , aIsCMI
     where

@@ -63,7 +63,10 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   -- 1. Sabiendo que (a , b) ∉ θab ⇒ θab ≠ 1_A
   -- 2. Sabiendo que es maximal tambien ⇒ θabIsCongCMI
   postulate
-    θabCMI : (ab : I) → Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ] ((¬ (proj₁ θ) (proj₁ ab) (proj₁ (proj₂ ab)))) × IsCongCMI n𝐀 θ
+    θabCMI : (ab : I)
+           → Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ]
+             ((¬ (proj₁ θ) (proj₁ ab) (proj₁ (proj₂ ab)))) ×
+             IsCongCMI n𝐀 θ
 
   famOfCongs : (ab : I) → Con 𝐀 {ρᵅ}
   famOfCongs ab = proj₁ (θabCMI ab)
@@ -71,11 +74,16 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   famOfRels : (ab : I) → Rel Car ρᵅ
   famOfRels ab = proj₁ (famOfCongs ab)
 
-  θab≠1 : (ab : I) → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ (proj₁ (θabCMI ab))) x y)
-  θab≠1 ab xθy = proj₁ (proj₂ (θabCMI ab)) (xθy (proj₁ ab) (proj₁ (proj₂ ab)))
+  θab≠1 : (ab : I)
+        → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ (proj₁ (θabCMI ab))) x y)
+  θab≠1 ab xθy = proj₁ (proj₂ (θabCMI ab))
+                       (xθy (proj₁ ab)
+                            (proj₁ (proj₂ ab))
+                       )
 
   𝐀/θabNonTrivial : (ab : I) → NonTrivialAlgebra {β = α} {ρ = ρᵅ} 
-  𝐀/θabNonTrivial ab = quotNonTrivial n𝐀 (proj₁ (θabCMI ab) , θab≠1 ab)
+  𝐀/θabNonTrivial ab = quotNonTrivial n𝐀 (proj₁ (θabCMI ab)
+                     , θab≠1 ab)
 
   fam : (ab : I) → Algebra α ρᵅ
   fam ab = proj₁ (𝐀/θabNonTrivial ab) 
@@ -83,8 +91,10 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   natSubIrrMap : Func A 𝔻[ (⨅ fam)]
   natSubIrrMap = NatMap 𝐀 famOfCongs
   
-  𝐀/θabIsSubIrr : (ab : I) → IsSubIrreducible (𝐀/θabNonTrivial ab) {i = i}
-  𝐀/θabIsSubIrr ab =  θCMI→𝐀/θisSubIrr n𝐀 (proj₁ (θabCMI ab) , θab≠1 ab) (proj₂ (proj₂ (θabCMI ab)))
+  𝐀/θabIsSubIrr : (ab : I)
+                → IsSubIrreducible (𝐀/θabNonTrivial ab) {i = i}
+  𝐀/θabIsSubIrr ab =  θCMI→𝐀/θisSubIrr n𝐀 (proj₁ (θabCMI ab)
+                   , θab≠1 ab) (proj₂ (proj₂ (θabCMI ab)))
 
   ∩abθab⇔0A : ⋂ᵣ {s = α ⊔ ρᵅ} I famOfRels ⇔ proj₁ (0relCong n𝐀)
   ∩abθab⇔0A = ∩θ⊆0 , 0=∩θ
@@ -145,7 +155,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
       FisInjective = inj
 
       FisSurjective : IsSurjective F
-      FisSurjective {iMap , x , fix=imap } = Setoid.Functions.eq x imapθfx
+      FisSurjective {iMap , x , fix=imap} = Setoid.Functions.eq x imapθfx
         where
           imapθfx : (i : I) → proj₁ (proj₁ (θabCMI i)) (iMap i) x
           imapθfx i = θisym (fix=imap i)
