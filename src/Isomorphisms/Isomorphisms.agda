@@ -23,8 +23,8 @@ private variable α β ρᵅ ρᵝ i : Level
 module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
   open Algebra 𝐀 renaming (Domain to A ; Interp to AInterp)
   open Algebra 𝐁 renaming (Domain to B ; Interp to BInterp)
-  open Setoid A renaming (Carrier to Acar)
-  open Setoid B renaming (Carrier to Bcar)
+  open Setoid A renaming (Carrier to Acar ; _≈_ to _≈a_)
+  open Setoid B renaming (Carrier to Bcar ; _≈_ to _≈b_)
 
   record IsIso (h : Func A B) : Set (ov((α ⊔ ρᵅ ⊔ β ⊔ ρᵝ ⊔ ρᵝ))) where
     field
@@ -34,6 +34,11 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
   Iso : Set ((ov((α ⊔ ρᵅ ⊔ β ⊔ ρᵝ ⊔ ρᵝ)))) 
   Iso = Σ (Func A B) IsIso
 
+  module _ (iso : 𝐀 ≅ 𝐁) where
+    open _≅_ iso
+    postulate
+      ≅→Iso : (h : Func A B) → ((x : Acar) → (<$> (proj₁ to)) x ≈b <$> h x) → IsIso h
+      
   Iso→≅ : (h : Iso) → 𝐀 ≅ 𝐁
   Iso→≅ h = mkiso hom→ ←hom eqb eqa
     where
@@ -45,7 +50,6 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
                              ; trans to Atrans
                              )
       open Setoid B renaming (refl to Brefl
-                             ; _≈_ to _≈b_
                              ; sym to Bsym
                              ; trans to Btrans
                              )
@@ -70,7 +74,6 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
 
       eqa : ∀ (a : 𝕌[ 𝐀 ]) → <$> h⁻¹ (<$> (proj₁ h) a) ≈ₐ a
       eqa a = proj₁ IsBij (eqb (<$> (proj₁ h) a))
-
 
       ←hom : hom 𝐁 𝐀
       ←hom = h⁻¹ , record { compatible = invIsCompatible }

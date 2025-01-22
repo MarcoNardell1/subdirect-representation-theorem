@@ -5,7 +5,7 @@ open import Level
 open import Data.Product
 open import Relation.Binary using (Setoid ; _⇒_ ; Reflexive ; IsEquivalence ; _⇔_) renaming (Rel to BinRel)
 open import Relation.Nullary using (¬_)
-open import Function using (Func)
+open import Function using (Func ; id)
 open import Function.Construct.Composition using (function)
 
 open import Relation.Binary.PropositionalEquality as ≡ using ()
@@ -27,14 +27,10 @@ open import Prod.Subembedding
 open import Prod.Subdirect using (⨅-fun ; IsSubdirectProduct)
 open import Isomorphisms.Isomorphisms using (Iso ; Iso→≅)
 open import Utils.Axioms using (absurd ; ¬∀→∃¬)
-
+open import Utils.Definitions
 private variable α β ρᵅ ρᵝ i : Level
 
 open Func renaming (f to <$>) 
-
--- arbitray intersection
-⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
-⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
 
 -- family of homomorphisms
 module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where
@@ -47,12 +43,16 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
   open Algebra 𝐁 renaming (Domain to B)
   open Setoid B 
   famSeparatePoints : (h : FamOfHoms 𝐁 𝓐) → Set (i ⊔ β ⊔ ρᵝ ⊔ ρᵅ)
-  famSeparatePoints h = (x  y : 𝕌[ 𝐁 ]) → ¬ (x ≈ y) → Σ[ j ∈ I ] (pred j x y) 
+  famSeparatePoints h = (x  y : 𝕌[ 𝐁 ])
+                      → ¬ (x ≈ y)
+                      → Σ[ j ∈ I ] (pred j x y) 
     where
       open FamOfHoms h
+      hᵢ : (j : I) → Func B 𝔻[ (𝓐 j) ]
+      hᵢ j = (proj₁ (family j))
+      
       pred : (j : I) (x y : 𝕌[ 𝐁 ]) → Set ρᵅ
-      -- usar la igualdad de 𝓐 j
-      pred j x y = ¬ (<$> (proj₁ (family j)) x) ≈aj (<$> (proj₁ (family j)) y)   
+      pred j x y = ¬ (<$> (hᵢ j) x) ≈aj (<$> (hᵢ j) y)   
         where
           open Algebra (𝓐 j) renaming (Domain to Aj)
           open Setoid Aj renaming (_≈_ to _≈aj_)
@@ -65,7 +65,6 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
   (b) h is injective
   (c) ⋂ᵣ I ker(hᵢ) = 0_B
 -}
-
 
 module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (h : FamOfHoms 𝐁 𝓐) where
 
@@ -90,30 +89,34 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
   is such that h(b)(i) = hᵢ(b)
   -} 
   IsProdOfHoms : hom 𝐁 (⨅ 𝓐)
-  IsProdOfHoms  = F , record { compatible = λ j → IsHom.compatible (proj₂ (family j))}
+  IsProdOfHoms  = F , record { compatible = comp }
     where
       F : Func (𝔻[ 𝐁 ]) (𝔻[ (⨅ 𝓐) ])
-      F = record { f = λ b i  → <$> (proj₁ (family i)) b  ; cong = λ {x} {y} x=y j → cong (proj₁ (family j)) x=y }
+      F = record { f = λ b i  → <$> (proj₁ (family i)) b
+                 ; cong = λ {x} {y} x=y j → cong (proj₁ (family j)) x=y
+                 }
+                 
+      comp : compatible-map 𝐁 (⨅ 𝓐) F
+      comp j = hjcomp
+        where
+          open IsHom (proj₂ (family j)) renaming (compatible to hjcomp)
 
 
-  kerOfProd→⋂kers : ∀ (a b : 𝕌[ 𝐁 ]) → (fker ((proj₁ IsProdOfHoms))) a b → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
-  kerOfProd→⋂kers a b  a≈ₖb i = lift (a≈ₖb i)
+  kerOfProd→⋂kers : ∀ {a b : 𝕌[ 𝐁 ]}
+                   → (fker ((proj₁ IsProdOfHoms))) a b
+                   → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
+  kerOfProd→⋂kers a≈ₖb i = lift (a≈ₖb i)
 
-  ⋂kers→kerOfProd : ∀ (a b : 𝕌[ 𝐁 ]) → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b → (fker ((proj₁ IsProdOfHoms))) a b
-  ⋂kers→kerOfProd a b a≈⋂b = λ j → eq j (a≈⋂b j)
-    where
-      eqType : (j : I)  → Set ρᵅ
-      eqType j  = <$> (proj₁ IsProdOfHoms) a j ≈aj <$> (proj₁ IsProdOfHoms) b j
-        where 
-          open Algebra (𝓐 j) renaming (Domain to Aj)
-          open Setoid Aj renaming (_≈_ to _≈aj_)
-
-      eq : (j : I) →  Lift (α ⊔ i ⊔ ρᵅ) (kerOfFam j a b) → eqType j 
-      eq j (lift p) = p
+  ⋂kers→kerOfProd : ∀ {a b : 𝕌[ 𝐁 ]}
+                   → (⋂ᵣ {s = i ⊔ α} I kerOfFam) a b
+                   → (fker ((proj₁ IsProdOfHoms))) a b
+  ⋂kers→kerOfProd {a} {b} a≈⋂b = λ j → lower (a≈⋂b j)
 
  -- proving ⟨hᵢ : i ∈ I⟩ separates points implies h is injective 
   firstEquiv : famSeparatePoints 𝐁 𝓐 h → IsInjective (proj₁ IsProdOfHoms)
-  firstEquiv sp {x} {y} = λ inj → absurd (x ≈ y) λ ¬x≈y → proj₂ (sp x y ¬x≈y) (inj (proj₁ (sp x y ¬x≈y)))
+  firstEquiv sp {x} {y} inj = absurd (x ≈ y)
+                                     λ ¬x≈y → proj₂ (sp x y ¬x≈y)
+                                                    (inj (proj₁ (sp x y ¬x≈y)))
  
   -- proving h is injective implies ∩ ker hᵢ = 0B
   {-
@@ -123,33 +126,44 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) (
  -}
   
   0⊆∩ : 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
-  0⊆∩ {x = x} {y = y} (lift xθy) j = lift (cong (proj₁ (family j)) xθy)
+  0⊆∩ (lift xθy) j = lift (cong (proj₁ (family j)) xθy)
   
-  secondEquiv₁ : IsInjective (proj₁ IsProdOfHoms) → ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇒ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
-  secondEquiv₁ inj {x} {y} = λ eq → lift (inj (⋂kers→kerOfProd x y eq))
+  secondEquiv₁ : IsInjective (proj₁ IsProdOfHoms)
+               → ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇒ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+  secondEquiv₁ inj eq = lift (inj (⋂kers→kerOfProd eq))
 
-  secondEquiv₂ : IsInjective (proj₁ IsProdOfHoms) → 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
-  secondEquiv₂ inj {x} {y} = 0⊆∩
+  secondEquiv₂ : IsInjective (proj₁ IsProdOfHoms)
+               → 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = i ⊔ α} I kerOfFam
+  secondEquiv₂ inj = 0⊆∩
 
-  thirdEquiv : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → famSeparatePoints 𝐁 𝓐 h
-  thirdEquiv (∩→0 , 0→∩) = λ x y ¬x≈y → proj₁ (¬x≈y→¬kerhᵢ ¬x≈y) , proj₂ (¬x≈y→¬kerhᵢ ¬x≈y)
+  thirdEquiv : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+             → famSeparatePoints 𝐁 𝓐 h
+  thirdEquiv (∩→0 , _) = λ x y ¬x≈y → proj₁ (¬x≈y→¬kerhᵢ ¬x≈y)
+                                      , proj₂ (¬x≈y→¬kerhᵢ ¬x≈y)
     where
       unLiftEq : {x y : Car} → Lift ρᵅ (x ≈ y) → x ≈ y
       unLiftEq (lift p) = p
       
-      ¬x≈y→¬0 : {x y : Car} → ¬ (x ≈ y) → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
+      ¬x≈y→¬0 : {x y : Car}
+              → ¬ (x ≈ y)
+              → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
       ¬x≈y→¬0 ¬x≈y = λ x≈y∈0 → ¬x≈y (unLiftEq x≈y∈0)
 
-      ¬0→¬∩ker : {x y : Car} → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y) → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
+      ¬0→¬∩ker : {x y : Car}
+               → ¬ (0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} x y)
+               → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
       ¬0→¬∩ker  ¬0 = λ x≈y∈∩ker → ¬0 (∩→0 x≈y∈∩ker)
 
-      ¬∩ker→¬kerhᵢ : {x y : Car} → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
-      ¬∩ker→¬kerhᵢ {x} {y} ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x y x≈ajy)
+      ¬∩ker→¬kerhᵢ : {x y : Car}
+                   → ¬ (⋂ᵣ {s = i ⊔ α} I kerOfFam x y)
+                   → Σ[ j ∈ I ] ¬(kerOfFam j x y)
+      ¬∩ker→¬kerhᵢ ¬∩ = ¬∀→∃¬ λ x≈ajy → ¬∩ (kerOfProd→⋂kers x≈ajy)
 
       ¬x≈y→¬kerhᵢ : {x y : Car} → ¬ (x ≈ y) → Σ[ j ∈ I ] ¬(kerOfFam j x y)
       ¬x≈y→¬kerhᵢ ¬x≈y = (¬∩ker→¬kerhᵢ (¬0→¬∩ker (¬x≈y→¬0 ¬x≈y)))
 
-  ∩⇔0→Inj : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ} → IsInjective (proj₁ IsProdOfHoms)
+  ∩⇔0→Inj : ⋂ᵣ {s = i ⊔ α} I kerOfFam ⇔ 0rel {𝐴 = B} {𝐵 = ⨅A} {ℓ = ρᵅ}
+            → IsInjective (proj₁ IsProdOfHoms)
   ∩⇔0→Inj ∩=0 = firstEquiv (thirdEquiv ∩=0)
             
 {-
@@ -158,7 +172,8 @@ If ⋂_{i ∈ I} θᵢ = 0_A then the natrual map 𝐀 → ⨅_{i∈ I} 𝐀/θ�
 Conversely,  if g → 𝐀 ⨅ 𝐁ᵢ is a subdirect embedding then θᵢ = ker(pᵢ ∘ g), we have ∩θᵢ = 0_A and 𝐀/θᵢ ⋍ 𝐁ᵢ.
 -}
 
-prodQuot : ∀ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ = ℓ}) → Algebra (α ⊔ i) (i ⊔ ℓ)
+prodQuot : ∀ {ℓ} {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ℓ})
+         → Algebra (α ⊔ i) (i ⊔ ℓ)
 prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
   where
     family : I → Algebra α ℓ 
@@ -166,8 +181,7 @@ prodQuot {α = α} {ℓ = ℓ} {I = I} 𝐀 θ = ⨅ family
 
 module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) where
   open Algebra 𝐀 renaming (Domain to A)
-  open Setoid A renaming (Carrier to Car)
-
+  open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_)
 
   -- A family of quotient algebras for the family of congruences ⟨θᵢ : i ∈ I ⟩
   famOfQuot : I → Algebra α ρᵅ
@@ -182,11 +196,20 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
 
   -- defining the function natural map 𝐀 → ⨅ 𝐀／(θ i) 
   NatMap : Func A ⨅A/θ
-  NatMap = record { f = λ x j → x ; cong = λ x=y j → IsCongruence.reflexive (proj₂ (θ j)) x=y }
+  NatMap = record { f = maps ; cong = pres }
+    where
+      maps : Car → pCar
+      maps x j = x
+
+      pres : {x y : Car} → x ≈a y → (j : I) → proj₁ (θ j) x y
+      pres x=y j = r x=y
+        where
+          open IsCongruence (proj₂ (θ j)) renaming (reflexive to r)
+    
 
   -- Given a family of congruences we take the binary relation of each congruence
-  familyOfRels : (I → Con 𝐀 {ρᵅ}) → I → BinRel Car ρᵅ
-  familyOfRels θ = λ i → proj₁ (θ i) 
+  familyOfRels :  I → BinRel Car ρᵅ
+  familyOfRels i = proj₁ (θ i) 
 
   -- defining the family of homomorphisms ⟨hᵢ : 𝐀 → 𝐀／(θ i), ∀ i  ∈ I ⟩ 
   natHomMap : FamOfHoms 𝐀 famOfQuot
@@ -209,7 +232,12 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
 
   -- defining the product of the family of natural map homomorphisms
   prodOfNatHomMap : hom 𝐀 prodOfQuot
-  prodOfNatHomMap = NatMap , record { compatible = λ j → IsHom.compatible (proj₂ (family j))}
+  prodOfNatHomMap = NatMap , record { compatible = prodComp }
+    where
+      prodComp : compatible-map 𝐀 prodOfQuot NatMap
+      prodComp j = θjcomp
+        where
+          open IsHom (proj₂ (family j)) renaming (compatible to θjcomp)
 
   -- note that hᵢ : 𝐀 → 𝐀／θᵢ is surjective for each i ∈ I 
   hᵢIsSurj : ∀ (j : I) → IsSurjective (proj₁ (family j))
@@ -244,32 +272,32 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (θ : I → Con 𝐀 {ρᵅ}) whe
   
 
   -- First statement of proposition 
-  NatMapIsSubEmb : (⋂ᵣ {s = α ⊔ i} I (familyOfRels θ)) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
+  NatMapIsSubEmb :
+    (⋂ᵣ {s = α ⊔ i} I familyOfRels ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅A/θ} {ℓ = ρᵅ} 
                  → IsSubEmb 𝐀 famOfQuot  NatMap
   NatMapIsSubEmb (∩θ⇒0A , 0A⇒∩θ) = record { Mon = monOfProd
                                             ; isSubdirProd = DirImageIsSubEmb 
                                             }
     where
-      monOfProd : IsMon 𝐀 (⨅ famOfQuot) NatMap
+      monOfProd : IsMon 𝐀 prodOfQuot NatMap
       monOfProd = record { isHom = proj₂ prodOfNatHomMap
                          ; isInjective = ∩⇔0→Inj
                                          𝐀
                                          famOfQuot
                                          natHomMap
-                                         ((λ xθy → ∩θ⇒0A xθy) , 0⊆∩ 𝐀 famOfQuot natHomMap)
+                                         (  (λ xθy → ∩θ⇒0A xθy)
+                                          , 0⊆∩ 𝐀 famOfQuot natHomMap
+                                         )
                          }
 
 
       open IsMon monOfProd 
-      open Algebra (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd)) renaming (Domain to gA)
-
       open Image_∋_ 
-      F : Func gA ⨅A/θ
-      F = record { f = λ {(f , p) j →  (<$> NatMap) (f j) j}; cong = λ xθjy j → xθjy j}
-      
-      DirImageIsSubEmb : IsSubdirectProduct (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd))
-                                            famOfQuot
-                                            (subAlg 𝐀 famOfQuot (NatMap , monOfProd))
+
+      DirImageIsSubEmb :
+        IsSubdirectProduct (genAlgFromMon 𝐀 famOfQuot (NatMap , monOfProd))
+                           famOfQuot
+                           (subAlg 𝐀 famOfQuot (NatMap , monOfProd))
       DirImageIsSubEmb j {a} = eq ((λ k → a) , a , θₗRefl ) refl-j
         where
           open IsCongruence (proj₂ (θ j)) renaming (is-equivalence to equivj)
@@ -316,10 +344,13 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       open IsEquivalence equivBj renaming (refl to reflBj ; sym to symBj ; trans to transBj)
 
       reflθ : {a b : Car} → a ≈a b → θᵢ j a b
-      reflθ {a} {b} a≈b = gcong {a} {b} a≈b j
+      reflθ a≈b = gcong a≈b j
 
       equivθ :  IsEquivalence (θᵢ j)
-      equivθ  = record { refl =  reflBj ; sym = symBj ; trans = transBj }
+      equivθ  = record { refl =  reflBj
+                       ; sym = symBj
+                       ; trans = transBj
+                       }
 
       θⱼComp : 𝐀 ∣≈ θᵢ j
       θⱼComp 𝑓 {x} {y} xθⱼy = begin
@@ -334,11 +365,25 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
   famOfQuot₂ : ∀ (j : I) → Algebra α ρᵝ
   famOfQuot₂ j = 𝐀 ╱ famOfCong j 
 
+  ∩=0 : (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
+  ∩=0 = ∩θᵢ⇒0 , 0⇒∩θᵢ
+    where
+    -- Proving that ∩θ = 0A
+      kerg≈∩θ : fker (proj₁ g) ⇔  ⋂ᵣ {s = α ⊔ i} I θᵢ
+      kerg≈∩θ = (λ xy∈ker k → lift (xy∈ker k))
+              , λ xy∈∩ k → lower (xy∈∩ k)
+         
+      ∩θᵢ⇒0 : ⋂ᵣ {s = α ⊔ i} I θᵢ ⇒ 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
+      ∩θᵢ⇒0 pᵢgx≈pigy = lift (injg (proj₂ kerg≈∩θ pᵢgx≈pigy)) 
+
+      0⇒∩θᵢ : 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = α ⊔ i} I θᵢ
+      0⇒∩θᵢ x≈y k = proj₁ kerg≈∩θ (λ l → gcong (lower x≈y) l) k
+
+  
   subemb→quot≅Bᵢ : ∀ (j : I)
                  → (⋂ᵣ {s = α ⊔ i} I θᵢ) ⇔  0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
                    × (famOfQuot₂ j) ≅ (𝓑 j)
-  subemb→quot≅Bᵢ j = (∩θᵢ⇒0 , 0⇒∩θᵢ)
-                   , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
+  subemb→quot≅Bᵢ j = ∩=0 , Iso→≅ (famOfQuot₂ j) (𝓑 j) quotIso
     where
       open Algebra (𝓑 j) renaming (Domain to Bj)
       open Setoid Bj renaming (_≈_ to _≈bj_ ; sym to bjsym ; trans to bjtrans)
@@ -352,7 +397,7 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
 
       -- proving that 𝐀／θᵢ ≅ 𝐁ᵢ
       quotIso : Iso (famOfQuot₂ j) (𝓑 j)
-      quotIso = F , record { Hom = FIsHom ; IsBij = (λ fx=fy → fx=fy) ,  pᵢ∘gIsSurj }
+      quotIso = F , record { Hom = FIsHom ; IsBij = id , pᵢ∘gIsSurj }
         where
           {-
             Defining F : 𝐀／θᵢ → 𝓑ᵢ as
@@ -370,14 +415,9 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
 
           pᵢ∘gIsSurj : IsSurjective F
           pᵢ∘gIsSurj {y} with subp j {y}
-          ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a ((bjtrans y≈gt (bjsym (bᵢ≈ga j))))
-    
-      -- Proving that ∩θ = 0A
-      kerg≈∩θ : fker (proj₁ g) ⇔  ⋂ᵣ {s = α ⊔ i} I θᵢ
-      kerg≈∩θ = (λ x k → lift (x k)) , λ x k → lower (x k)
-         
-      ∩θᵢ⇒0 : ⋂ᵣ {s = α ⊔ i} I θᵢ ⇒ 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ}
-      ∩θᵢ⇒0 pᵢgx≈pigy = lift (injg (proj₂ kerg≈∩θ pᵢgx≈pigy)) 
-
-      0⇒∩θᵢ : 0rel {𝐴 = A} {𝐵 = ⨅B} {ℓ = ρᵅ} ⇒ ⋂ᵣ {s = α ⊔ i} I θᵢ
-      0⇒∩θᵢ x≈y k = proj₁ kerg≈∩θ (λ l → gcong (lower x≈y) l) k
+          ... | eq (bᵢ , a , bᵢ≈ga) y≈gt = eq a (bjtrans y≈gt
+                                                       (bjsym
+                                                         (bᵢ≈ga j)
+                                                        )
+                                               )
+      

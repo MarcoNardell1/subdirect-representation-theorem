@@ -247,8 +247,7 @@ Definimos ahora la nocion de Intervalo de un Poset. Para un poset $\mathbf{P}$, 
 -}
 
 module _ {c ℓ₁ ℓ₂}  (𝐏 : Poset c ℓ₁ ℓ₂) where
-  open Poset 𝐏 renaming (Carrier to P ; _≤_ to _≤p_ ; isPartialOrder to PO)
-  open IsPartialOrder PO
+  open Poset 𝐏 renaming (Carrier to P ; _≤_ to _≤p_)
   𝐈[_][_,_] : ∀ (a b : P) → Pred P ℓ₂ 
   𝐈[_][_,_] a b x = (a ≤p x) × (x ≤p b)
 
@@ -265,8 +264,8 @@ module _ {c ℓ₁ ℓ₂} (𝐏 : Poset c ℓ₁ ℓ₂) where
   open IsPartialOrder PO
 
   postulate
-    compLatticeDef : ∀ (X : Pred P ℓ₂) (x : P)
-                   → IsInfimum _≤p_ X x
+    compLatticeDef : ∀ {ℓ} (X : Pred P ℓ) (⋀_ : Op P)
+                   → IsInfimum _≤p_ X (⋀ X)
                    → CompleteLattice c ℓ₁ ℓ₂ ℓ₂ ℓ₂
 
 \end{code}

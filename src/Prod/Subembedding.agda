@@ -50,7 +50,9 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
    record IsSubEmb (h : Func B A) : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))  where
      field
        Mon : IsMon 𝐁 (⨅ 𝓐) h 
-       isSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon)) 𝓐 (subAlg (h , Mon))
+       isSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon))
+                                         𝓐
+                                         (subAlg (h , Mon))
        
      genAlg≤Prod : (genAlgFromMon (h , Mon)) ≤ (⨅ 𝓐)
      genAlg≤Prod = subAlg (h , Mon)
