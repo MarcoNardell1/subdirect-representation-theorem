@@ -105,6 +105,10 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
                       ; is-compatible =  0comp
                       }
   
+-- Defining that a congruence is not 1_A
+module _ (𝐀 : Algebra α ρᵅ) where
+  θisNot1 : (θ : Con 𝐀 {ρᵅ}) → Set (α ⊔ ρᵅ)
+  θisNot1 θ = Σ[ x ∈ 𝕌[ 𝐀 ] ] Σ[ y ∈ 𝕌[ 𝐀 ] ] ¬ (proj₁ θ) x y
 
 -- Redifining an element is completelyMeetIrreducible
 {- Using this avoids the use of CongCompleteLattice -}
@@ -116,7 +120,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   ⇔-closed P = ∀ x y → P x → (proj₁ x) ⇔ (proj₁ y) → P y
   
   IsCongCMI : ∀ (C : Con base {ρᵅ}) → Set (suc (α ⊔ (ov ρᵅ)))
-  IsCongCMI C = (¬ (∀ x y → (proj₁ C) x y)) × (∀ P → ⇔-closed P  → proj₁ (⋀c base P) ⇔ (proj₁ C) → P C)
+  IsCongCMI C = θisNot1 base C × (∀ P → ⇔-closed P  → proj₁ (⋀c base P) ⇔ (proj₁ C) → P C)
 
 -- 𝐀 is subdirectly irreducible implies 0_A is CMI in Con 𝐀
 module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) where
@@ -142,14 +146,14 @@ module _ (𝐀si : SubdirectlyIrreducible {i = α ⊔ (ov ρᵅ)} {α} {ρᵅ}) 
   x≠y = proj₂ (proj₂ 𝐁isNonTriv)
   
   0CMI : IsCongCMI n𝐀 (0relCong n𝐀) 
-  0CMI = abs , 0=⋀P→θ=0
+  0CMI = 0isNot1 , 0=⋀P→θ=0
     where
       x≠y→¬x0y : ∀ {x y : 𝕌[ 𝐁 ]} → ¬ (x ≈b y) → ¬ (proj₁ (0relCong n𝐀) x y)
       x≠y→¬x0y ¬x=y (lift x0y) = ¬x=y x0y
 
-      abs : ¬ ((x y : 𝕌[ 𝐁 ]) → proj₁ (0relCong n𝐀) x y)
-      abs x0y = x≠y→¬x0y x≠y (x0y x y)
-          
+      0isNot1 : Σ[ x ∈ 𝕌[ 𝐁 ] ] Σ[ y ∈ 𝕌[ 𝐁 ] ] ¬ (proj₁ (0relCong n𝐀)) x y
+      0isNot1 = x , y , x≠y→¬x0y x≠y
+      
       0=⋀P→θ=0 : (P : Pred (Con 𝐁 {ρᵅ}) (α ⊔ (ov ρᵅ)))
                → ⇔-closed n𝐀 P
                → proj₁ (⋀c 𝐁 P) ⇔ proj₁ (0relCong n𝐀)
@@ -293,22 +297,13 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
 
 -- No trivial congruences 
   non1Cong : Set (ov ρᵅ ⊔ α)
-  non1Cong = Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ] ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
+  non1Cong = Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ] θisNot1 𝐀 θ -- ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
 
 -- With a non trivial congruence, the quotient algebra is not rivial
   quotIsNonTrivial : (θ : non1Cong) 
                    → IsNonTrivialAlgebra (𝐀 ╱ (proj₁ θ))
-  quotIsNonTrivial (θ , θ≠1) = 2Neg
-    where
-      open IsCongruence (proj₂ θ) renaming ( is-equivalence to equiv )
-      open IsEquivalence equiv
-
-      1Neg : Σ[ x ∈ 𝕌[ 𝐀 ] ] (¬ ∀ (y : 𝕌[ 𝐀 ]) → (proj₁ θ) x y)
-      1Neg = ¬∀→∃¬ θ≠1
-
-      2Neg : Σ[ x ∈ 𝕌[ 𝐀 ] ] (Σ[ y ∈ 𝕌[ 𝐀 ] ] (¬ (proj₁ θ) x y))
-      2Neg = proj₁ 1Neg , ¬∀→∃¬ (proj₂ 1Neg)
-      
+  quotIsNonTrivial (θ , θ≠1) = θ≠1
+    
   quotNonTrivial : (θ : non1Cong)
                  →  NonTrivialAlgebra {β = α} {ρ = ρᵅ}
   quotNonTrivial θ = (𝐀 ╱ (proj₁ θ)) , quotIsNonTrivial θ
