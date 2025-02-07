@@ -1,11 +1,16 @@
 module Poset where
 
 -- Standard library imports
-open import Relation.Binary         using (Rel ; IsPartialOrder; Poset)
+open import Relation.Binary         using ( Rel
+                                          ; IsPartialOrder
+                                          ; Poset
+                                          ; IsPreorder
+                                          ; IsEquivalence
+                                          )
 open import Level                   using (Level ; _⊔_ ; suc)
 open import Relation.Unary          using (Pred)
 open import Relation.Nullary        using (¬_)
-open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂ ; Σ ; _,_)
+open import Data.Product            using (_×_ ; ∃; ∃-syntax; proj₁ ; proj₂ ; Σ ; Σ-syntax ; _,_)
 open import Data.Unit.Polymorphic   using (⊤)
 open import Data.Sum                using (_⊎_) 
 open import Function                using (flip)
@@ -160,14 +165,92 @@ module _ {c ℓ₁ ℓ₂}  (𝐏 : Poset c ℓ₁ ℓ₂) where
   𝐈[_][_,_] a b x = (a ≤p x) × (x ≤p b)
 
 {-
+  Proposition: 
   Let 𝐏 a Poset in which inf X exists for each X ⊆ P. Then 𝐏 is a complete lattice.
 -}
 module _ {c ℓ₁ ℓ₂} (𝐏 : Poset c ℓ₁ ℓ₂) where
-  open Poset 𝐏 renaming (Carrier to P ; _≤_ to _≤p_ ; isPartialOrder to PO)
-  open IsPartialOrder PO
+  open Poset 𝐏 renaming (Carrier to P
+                        ; _≤_ to _≤p_
+                        ; _≈_ to _≈p_
+                        ; isPartialOrder to PO
+                        )
+  open IsPartialOrder PO renaming (isPreorder to preO ; ≤-resp-≈ to resp) 
+  open IsPreorder preO renaming (isEquivalence to equiv ; trans to ≤trans)
+  open IsEquivalence equiv renaming (refl to reflp ; sym to symp ; trans to transp)
 
-  postulate
-    compLatticeDef : ∀ {ℓ} (X : Pred P ℓ) (⋀_ : Op P)
-                   → IsInfimum _≤p_ X (⋀ X)
-                   → CompleteLattice c ℓ₁ ℓ₂ ℓ₂ ℓ₂
+  compLatticeDef : (∀ {ℓ} (X : Pred P ℓ) →  Σ[ ⋀_ ∈ (Op P) ] (IsInfimum _≤p_ X (⋀ X)))
+                 → CompleteLattice c ℓ₁ ℓ₂ (c ⊔ ℓ₂) (c ⊔ ℓ₂)
+  compLatticeDef prop = record
+                       { Carrier = P
+                       ; _≈_ = _≈p_
+                       ; _≤_ = _≤p_
+                       ; ⋁_ = ⋁p_
+                       ; ⋀_ = ⋀p_
+                       ; isCompleteLattice = isCompLattice
+                       }
+    where
+      -- Infimum is carried by hipotesis
+      ⋀p_ : Op P
+      ⋀p_ X = proj₁ (prop X) X
+
+      -- Defining set of all upper bounds of an arbitrary subset X
+      Y : (X : Pred P (c ⊔ ℓ₂)) → Pred P _
+      Y X y = IsUpperBound _≤p_ X y
+
+      -- Supremum is the infimum of Y 
+      ⋁p_ : Op P
+      ⋁p_ X = proj₁ (prop (Y X)) (Y X)
+
+      -- Let a = ⋀Y 
+      a : (X : Pred P (c ⊔ ℓ₂)) → P
+      a X = ⋀p (Y X)
+
+      {- Let x ∈ X, x is a lower bound of Y -}
+      x≤y : (x : P) {X : Pred P (c ⊔ ℓ₂)}
+          → X x
+          → (∀ {y : P} → (Y X) y → x ≤p y)
+      x≤y x x∈X y∈Y = y∈Y x x∈X
+
+      xisLBofY : (x : P) {X : Pred P (c ⊔ ℓ₂)}
+               → X x
+               → IsLowerBound _≤p_ (Y X) x
+      xisLBofY x x∈X y y∈Y = x≤y x x∈X y∈Y
+
+      {- Because x is a lower bound of Y and a is the greatest lower bound of Y.
+      Then x ≤ a -}
+      x≤a : (x : P) {X : Pred P (c ⊔ ℓ₂)}
+          → X x
+          → x ≤p (a X)
+      x≤a x {X} x∈X = proj₂ (proj₂ (prop (Y X))) x (xisLBofY x x∈X)
+
+      {- because x is arbitrary, then x ≤ a implies a ∈ Y -}
+      a∈Y : {X : Pred P (c ⊔ ℓ₂)} → (Y X) (a X)
+      a∈Y {X} x x∈X = x≤a x x∈X
+
+      {- Because a ∈ Y, a is the greatest lower bound of Y -}
+      y∈Y→a≤y : {y : P} {X : Pred P (c ⊔ ℓ₂)} → (Y X) y → (a X) ≤p y
+      y∈Y→a≤y {y} {X} y∈Y = proj₁ (proj₂ (prop (Y X))) y y∈Y  
+
+      {- Been the gretest lower bound of Y means to be the least upper bound of X-} 
+      ⋁pIsSup : (X : Pred P (c ⊔ ℓ₂)) → IsSupremum _≤p_ X (⋁p X)
+      ⋁pIsSup X = (λ x x∈X → x≤a→x≤⋁pX (x≤a x x∈X))
+                , ⋁pisLeastUB
+        where
+          a≈⋁pX : (a X) ≈p (⋁p X)
+          a≈⋁pX = reflp
+
+          x≤a→x≤⋁pX : {x : P} → x ≤p (a X) → x ≤p (⋁p X)
+          x≤a→x≤⋁pX x≤a = proj₁ resp a≈⋁pX x≤a
+
+          ⋁pisLeastUB : (y : P) → IsUpperBound _≤p_ X y → (⋁p X) ≤p y
+          ⋁pisLeastUB y yisUB = proj₂ resp a≈⋁pX (y∈Y→a≤y y∈Y)
+            where
+              y∈Y : (Y X) y
+              y∈Y = yisUB
+
+      isCompLattice : IsCompleteLattice _≈p_ _≤p_ ⋁p_ ⋀p_
+      isCompLattice = record { isPartialOrder = PO
+                             ; isSupremum = λ X → ⋁pIsSup X
+                             ; isInfimum = λ X → proj₂ (prop X)
+                             }
 
