@@ -9,8 +9,7 @@ open import Relation.Nullary        using (¬_)
 open import Data.Product
 open import Data.Sum
 open import Data.Empty
-open import Data.Unit.Polymorphic using (⊤)
-open import Agda.Builtin.Unit       using (tt) 
+open import Data.Unit.Polymorphic using (⊤ ; tt)
 open import Algebra.Core            using (Op₂)
 
 -- Local imports
@@ -157,78 +156,58 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   open Lattice 𝐋 using (_∨_ ; _∧_)
 
   -- Check if an element is meet-irreducible
-  IsMI : Pred Carrier _
-  IsMI x = ∀ b c → x ≈ (b ∧ c) → (x ≈ b) ⊎ (x ≈ c)
+  IsMeetIrr : Pred Carrier _
+  IsMeetIrr x = ∀ b c → x ≈ (b ∧ c) → (x ≈ b) ⊎ (x ≈ c)
 
   -- check if an element is completely meet-irreducible
   ≈-closed : ∀ {ℓ} (P : Pred Carrier ℓ) → Set (c ⊔ ℓ₁ ⊔ ℓ)
   ≈-closed P = ∀ x y → P x → x ≈ y → P y
   
   IsCMI : Pred Carrier _
-  IsCMI x = ¬ (x ≈ (1L CL)) × (∀ P → ≈-closed P → (⋀ P) ≈ x → P x)
+  IsCMI x = ¬ (x ≈ 1L) × (∀ P → ≈-closed P → (⋀ P) ≈ x → P x)
 
--- Some strict order properties 
+  -- Some strict order properties 
   _<CL_ : Rel Carrier _
   a <CL b = a ≤ b × ¬ (a ≈ b)
 
-  <CL-trans :  ∀ (x y z : Carrier) → (x <CL y) × (y ≤ z) → x <CL z
-  <CL-trans x y z ((x≤y , ¬x≈y) , y≤z) = CL.trans x≤y y≤z , ¬x≈z x≤y y≤z ¬x≈y
+  <CL-trans :  ∀ {x y z : Carrier} → (x <CL y) × (y ≤ z) → x <CL z
+  <CL-trans {x} {y} {z} ((x≤y , ¬x≈y) , y≤z) =
+    CL.trans x≤y y≤z
+    , ¬x≈z x≤y y≤z ¬x≈y
     where
       ¬x≈z : x ≤ y → y ≤ z → ¬ (x ≈ y) → ¬ (x ≈ z)
-      ¬x≈z x≤y y≤z ¬x≈y = λ x₁ → ¬x≈y (CL.antisym x≤y (≤-eq  y≤z (CL.Eq.sym x₁)))   
+      ¬x≈z x≤y y≤z ¬x≈y = λ x₁ → ¬x≈y (CL.antisym x≤y
+                                                  (≤-eq  y≤z
+                                                         (CL.Eq.sym x₁)
+                                                   )
+                                       )   
 
   <CL-eq : ∀ (x y z : Carrier) → x <CL y → y ≈ z → x <CL z
-  <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x≤y y≈z , ¬≈-trans ¬x≈y y≈z
+  <CL-eq x y z (x≤y , ¬x≈y) y≈z = ≤-eq x≤y y≈z
+                                , ¬≈-trans ¬x≈y y≈z
   
   <CL-irr : ∀ (x : Carrier) → x <CL x → ⊥
   <CL-irr x (_ , x≠x) = x≠x CL.Eq.refl
   
-  1L≤-refl : ∀ (x : Carrier) → 1L CL ≤ x → 1L CL ≈ x
-  1L≤-refl x 1≤x = CL.Eq.trans 1≈⋁ (⋁≈x xIsSup) 
+  1L≤-refl : ∀ (x : Carrier) → 1L ≤ x → 1L ≈ x
+  1L≤-refl x 1≤x = CL.Eq.trans CL.Eq.refl (⋁≈x xIsSup)
     where
-      all : Pred Carrier ℓ₁
-      all = λ x → ⊤
-
-      y∈all : ∀ (y : Carrier) → all y
-      y∈all y = Level.lift Agda.Builtin.Unit.tt
-      
-      1≈⋁ : (1L CL) ≈ (⋁ all)
-      1≈⋁ = CL.Eq.refl
-      
-      y≤1 : ∀ (y : Carrier) → y ≤ 1L CL
-      y≤1 y =
-        proj₁
-          (isSupremum isCompleteLattice all)
-          y
-          (y∈all y)
-      
       xIsSup : IsSupremum _≤_ all x 
       xIsSup = (λ y y∈L → CL.trans (y≤1 y) 1≤x)
-             , λ z zIsUpper → zIsUpper x (Level.lift tt)
+             , λ z zIsUpper → zIsUpper x tt
 
-      sup-refl : ∀ (X : Pred Carrier ℓ₁) {x y : Carrier}
-               → IsSupremum _≤_ X x
-               → IsSupremum _≤_ X y → x ≈ y
-      sup-refl X {x} {y} (xUB , xisLUB) (yUB , yisLUB) =
-        CL.antisym
-          (xisLUB y yUB)
-          (yisLUB x xUB)
-      
       ⋁≈x : IsSupremum _≤_ all x → (⋁ all) ≈ x
-      ⋁≈x xIsSup =
-        sup-refl
-          all
-          (isSupremum isCompleteLattice all)
-          xIsSup
-      
-  <CL-not1 : ∀ (x y : Carrier) → x <CL y → ¬ (x ≈ 1L CL)
+      ⋁≈x xIsSup = sup-refl all (CL.isSupremum all) xIsSup
+
+       
+  <CL-not1 : ∀ (x y : Carrier) → x <CL y → ¬ (x ≈ 1L)
   <CL-not1 x y x<y = λ x≈1 → 1L<y (<CL-eqˡ x<y x≈1)
     where
-      <CL-eqˡ : x <CL y → x ≈ 1L CL → 1L CL <CL y
+      <CL-eqˡ : x <CL y → x ≈ 1L → 1L <CL y
       <CL-eqˡ (x≤y , ¬x≈y) x≈1 = ≤-eqˡ x≤y x≈1
                                , ¬≈-transˡ ¬x≈y x≈1
       
-      1L<y : (1L CL) <CL y → ⊥
+      1L<y : 1L <CL y → ⊥
       1L<y (1≤y , ¬1≈y) = ¬1≈y (1L≤-refl y 1≤y)
   
   -- Lemma
@@ -241,31 +220,32 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
   CMI→Cover : (a : Carrier)
             → IsCMI a
             → ∃[ c ] ((a <CL c) × (∀ (x : Carrier) → a <CL x → c ≤ x))
-  CMI→Cover a p = c' , (LB≤⋀ X a aIsLowerBound , abs) , meetL X
+  CMI→Cover a p = c' , (LB≤⋀ (↑ a) a aIsLowerBound , neg) , meetL (↑ a)
     where
-    
-      X : Pred Carrier ℓ₁
-      X x = a <CL x
+      -- Given an element (x : Carrier), defines the subset of all elements greater than x
+      ↑_ : Carrier → Pred Carrier ℓ₁
+      ↑ x = λ y → x <CL y 
 
-      XisClosed : ≈-closed X
-      XisClosed x y Xx x≈y = <CL-eq a x y Xx x≈y
+      -- (↑ a) is closed under equality 
+      ↑aisClosed : ≈-closed (↑ a)
+      ↑aisClosed x y x∈↑a x≈y = <CL-eq a x y x∈↑a x≈y
       
       c' : Carrier
-      c' = ⋀ X
+      c' = ⋀ (↑ a)
 
-      aIsLowerBound : IsLowerBound _≤_ X a
-      aIsLowerBound y a<y = proj₁ a<y
+      aIsLowerBound : IsLowerBound _≤_ (↑ a) a
+      aIsLowerBound x a<x = proj₁ a<x
 
-      abs : a ≈ c' → ⊥
-      abs a=c' = <CL-irr a a<a
+      neg : a ≈ c' → ⊥
+      neg a=c' = <CL-irr a a<a
         where
           a<a : a <CL a
-          a<a = proj₂ p X XisClosed (CL.Eq.sym a=c')
+          a<a = proj₂ p (↑ a) ↑aisClosed (CL.Eq.sym a=c')
     
   cover→CMI : (a : Carrier)
             → ∃[ c ] ((a <CL c) × (∀ (x : Carrier) → a <CL x → c ≤ x))
             → IsCMI a
-  cover→CMI a (c' , (a<c , p)) = <CL-not1 a c' a<c , aIsCMI
+  cover→CMI a (c , (a<c , a<x→c≤x)) = <CL-not1 a c a<c , aIsCMI
     where
       a<x : ∀ (X : Pred Carrier ℓ₁) (x : Carrier)
           → ≈-closed X
@@ -283,28 +263,23 @@ module MeetIrreducible {c ℓ₁} {CL : CompleteLattice c ℓ₁ ℓ₁ ℓ₁ �
       c≤inf : ∀ (X : Pred Carrier ℓ₁)
             → ≈-closed X
             → a ≈ (⋀ X) × ¬ (X a)
-            → c' ≤ (⋀ X)
-      c≤inf X XClosed (a≈inf , a∉X) = LB≤⋀ X c' cIsLowerBound
+            → c ≤ (⋀ X)
+      c≤inf X XClosed (a≈inf , a∉X) = LB≤⋀ X c cIsLowerBound
         where
-          cIsLowerBound : IsLowerBound _≤_ X c'
-          cIsLowerBound y y∈X = p y (a<x X
-                                         y
-                                         XClosed
-                                         (a≈inf , a∉X)
-                                         y∈X
-                                         (≤-eqˡ (meetL X y y∈X)
-                                                (CL.Eq.sym a≈inf)
-                                         )
-                                     )
+          cIsLowerBound : IsLowerBound _≤_ X c
+          cIsLowerBound y y∈X = a<x→c≤x y a<y 
+             where
+              a≤y : a ≤ y
+              a≤y = ≤-eqˡ (meetL X y y∈X) (CL.Eq.sym a≈inf)
 
+              a<y : a <CL y
+              a<y = a<x X y XClosed (a≈inf , a∉X) y∈X a≤y
+              
       a<a : ∀ (X : Pred Carrier ℓ₁)
           →  ≈-closed X
           → a ≈ (⋀ X) × ¬ (X a)
           → a <CL a
-      a<a X XClosed p = <CL-trans a
-                                  c'
-                                  a
-                                  (a<c , ≤-eq (c≤inf X XClosed p)
+      a<a X XClosed p = <CL-trans (a<c , ≤-eq (c≤inf X XClosed p)
                                               (CL.Eq.sym (proj₁ p))
                                   )
 
@@ -344,7 +319,7 @@ module _ {c ℓ₁ ℓ₂} (𝐋 : Lattice c ℓ₁ ℓ₂) where
                     ; isPartialOrder = PO
                     }
 
-  IntervalIsLattice : ∀ (a b : L) → Lattice (c ⊔ ℓ₂) ℓ₁ _
+  IntervalIsLattice : (a b : L) → Lattice (c ⊔ ℓ₂) ℓ₁ _
   IntervalIsLattice a b = record
                            { Carrier = Car
                            ; _≈_ = _≈ᵢ_
