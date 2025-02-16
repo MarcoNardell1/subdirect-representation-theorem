@@ -16,20 +16,22 @@ private variable α β ρᵅ ρᵝ i : Level
 -- Projections of a product
 module _ {I : Set i} (𝓐 : I → Algebra α ρᵅ) where
     ⨅-fun : (j : I) → Func (𝔻[ ⨅ 𝓐 ]) (𝔻[ 𝓐 j ])
-    ⨅-fun j = record { f = λ x →  x j ; cong = λ {a} {b} a=b → a=b j }
+    ⨅-fun j = record { f = λ x →  x j ; cong = λ a=b → a=b j }
 
 -- Type of SubdirectProduct
 {-
   An algebra 𝐁 is a subdirect product of ⟨ 𝐀ᵢ : i ∈ I ⟩ if 𝐁 is
   a subalgebra of ⨅_(i ∈ I) 𝐀ᵢ, and for every j ∈ I, pⱼ|B : 𝐁 → 𝐀ᵢ is surjective. 
 -}
-IsSubdirectProduct : ∀ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ)
+IsSubdirectProduct : ∀ {I : Set i}
+                   (𝐁 : Algebra β ρᵝ)
+                   (𝓐 : I → Algebra α ρᵅ)
                    → 𝐁 ≤ (⨅ 𝓐)
                    → Set (i ⊔ β ⊔ α ⊔ ρᵅ) 
-IsSubdirectProduct {I = I} 𝐁 𝓐 𝐁≤𝓐 = (j : I) →  IsSurjective (g j)
+IsSubdirectProduct 𝐁 𝓐 𝐁≤𝓐 = ∀ j →  IsSurjective (g j)
   where
     
-    g : (j : I) → Func (𝔻[ 𝐁 ]) (𝔻[ 𝓐 j ])
+    g : ∀ j → Func (𝔻[ 𝐁 ]) (𝔻[ 𝓐 j ])
     g j = function (proj₁ (proj₁ 𝐁≤𝓐)) (⨅-fun 𝓐 j)
 
 

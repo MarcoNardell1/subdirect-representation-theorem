@@ -26,8 +26,7 @@ private variable α β ρᵅ ρᵝ i : Level
 module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) where 
    open Algebra 𝐁 renaming (Domain to B)
    open Algebra (⨅ 𝓐) renaming (Domain to A)
-   open Setoid A renaming (_≈_ to _≈a_ ; refl to arefl)
-
+   
    genAlgFromMon : (h : mon 𝐁 (⨅ 𝓐)) → Algebra (β ⊔ (α ⊔ i) ⊔ (ρᵅ ⊔ i)) (ρᵅ ⊔ i)
    genAlgFromMon h = HomImageOf[ mon→hom 𝐁 (⨅ 𝓐) h ]
 
@@ -49,13 +48,13 @@ module _ {I : Set i} (𝐁 : Algebra β ρᵝ) (𝓐 : I → Algebra α ρᵅ) w
       
    record IsSubEmb (h : Func B A) : Set (ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ))  where
      field
-       Mon : IsMon 𝐁 (⨅ 𝓐) h 
-       isSubdirProd : IsSubdirectProduct (genAlgFromMon (h , Mon))
+       isMon : IsMon 𝐁 (⨅ 𝓐) h 
+       isSubdirProd : IsSubdirectProduct (genAlgFromMon (h , isMon))
                                          𝓐
-                                         (subAlg (h , Mon))
+                                         (subAlg (h , isMon))
        
-     genAlg≤Prod : (genAlgFromMon (h , Mon)) ≤ (⨅ 𝓐)
-     genAlg≤Prod = subAlg (h , Mon)
+     genAlg≤Prod : (genAlgFromMon (h , isMon)) ≤ (⨅ 𝓐)
+     genAlg≤Prod = subAlg (h , isMon)
 
    SubdirectEmbedding : Set ((ov (i ⊔ α ⊔ ρᵅ ⊔ β ⊔ ρᵝ)))
    SubdirectEmbedding = Σ (Func B A) IsSubEmb

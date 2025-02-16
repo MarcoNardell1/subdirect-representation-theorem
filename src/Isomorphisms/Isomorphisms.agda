@@ -16,7 +16,7 @@ open import Setoid.Functions.Inverses using (InvIsInverseʳ)
 open import Setoid.Homomorphisms {𝑆 = 𝑆} using (IsHom ; _≅_ ; hom ; mkiso ; compatible-map)
 
 
-open Func renaming (f to <$>)
+open Func renaming (f to _⟨$⟩_)
 private variable α β ρᵅ ρᵝ i : Level
 
 -- Defining Isomorphisms as a bijective homomorphism
@@ -37,7 +37,7 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
   module _ (iso : 𝐀 ≅ 𝐁) where
     open _≅_ iso
     postulate
-      ≅→Iso : (h : Func A B) → ((x : Acar) → (<$> (proj₁ to)) x ≈b <$> h x) → IsIso h
+      ≅→Iso : (h : Func A B) → ((x : Acar) → ((proj₁ to)) ⟨$⟩ x ≈b h ⟨$⟩ x) → IsIso h
       
   Iso→≅ : (h : Iso) → 𝐀 ≅ 𝐁
   Iso→≅ h = mkiso hom→ ←hom eqb eqa
@@ -69,11 +69,11 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
       hom→ : hom 𝐀 𝐁
       hom→ = (proj₁ h) , Hom
 
-      eqb : ∀ (b : 𝕌[ 𝐁 ]) → <$> (proj₁ h) (<$> h⁻¹ b) ≈b b
+      eqb : ∀ (b : 𝕌[ 𝐁 ]) → (proj₁ h) ⟨$⟩ (h⁻¹ ⟨$⟩ b) ≈b b
       eqb b = InvIsInverseʳ (proj₂ IsBij)
 
-      eqa : ∀ (a : 𝕌[ 𝐀 ]) → <$> h⁻¹ (<$> (proj₁ h) a) ≈ₐ a
-      eqa a = proj₁ IsBij (eqb (<$> (proj₁ h) a))
+      eqa : ∀ (a : 𝕌[ 𝐀 ]) → h⁻¹ ⟨$⟩ ((proj₁ h) ⟨$⟩ a) ≈ₐ a
+      eqa a = proj₁ IsBij (eqb ((proj₁ h) ⟨$⟩ a))
 
       ←hom : hom 𝐁 𝐀
       ←hom = h⁻¹ , record { compatible = invIsCompatible }
@@ -82,22 +82,22 @@ module _ (𝐀 : Algebra α ρᵅ) (𝐁 : Algebra β ρᵝ) where
           invIsCompatible {f} {a} = Asym final 
             where
             {- Gracias Andres-}
-              BAux : <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈b
+              BAux : (proj₁ h) ⟨$⟩ ((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x))) ≈b
                            (f ̂ 𝐁) (λ x → a x)
               BAux =  Bbegin
-                <$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))) ≈⟨ hcom  ⟩
-                (f ̂ 𝐁) (λ x → <$> (proj₁ h) (<$> h⁻¹ (a x))) ≈⟨ cong BInterp (≡.refl , λ i → eqb (a i)) ⟩
+                (proj₁ h) ⟨$⟩ ((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x))) ≈⟨ hcom ⟩
+                (f ̂ 𝐁) (λ x → (proj₁ h) ⟨$⟩ (h⁻¹ ⟨$⟩ (a x))) ≈⟨ cong BInterp (≡.refl , λ i → eqb (a i)) ⟩
                 (f ̂ 𝐁) (λ x → a x) ∎b 
               
-              invApply : <$> h⁻¹ (<$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))) ≈ₐ
-                           <$> h⁻¹ ((f ̂ 𝐁) (λ x → a x))
+              invApply : h⁻¹ ⟨$⟩ ((proj₁ h) ⟨$⟩ ((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x)))) ≈ₐ
+                           h⁻¹ ⟨$⟩ ((f ̂ 𝐁) (λ x → a x))
               invApply = invCong BAux
 
-              final : (f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)) ≈ₐ
-                      <$> h⁻¹ ((f ̂ 𝐁) (λ x → a x))
+              final : (f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x)) ≈ₐ
+                      h⁻¹ ⟨$⟩ ((f ̂ 𝐁) (λ x → a x))
               final = Asym (Atrans (Asym invApply) eqRed)
                 where
-                  eqRed : <$> h⁻¹ (<$> (proj₁ h) ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))) ≈ₐ
-                        ((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x)))
-                  eqRed = eqa (((f ̂ 𝐀) (λ x → <$> h⁻¹ (a x))))
+                  eqRed : h⁻¹ ⟨$⟩ ((proj₁ h) ⟨$⟩ ((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x)))) ≈ₐ
+                        ((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x)))
+                  eqRed = eqa (((f ̂ 𝐀) (λ x → h⁻¹ ⟨$⟩ (a x))))
                

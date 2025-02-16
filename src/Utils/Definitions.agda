@@ -6,8 +6,11 @@ open import Function using (id)
 open import Relation.Binary using (_⇔_ ; IsEquivalence) renaming (Rel to BinRel )
 
 -- arbitray intersection
-⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i) → (I → BinRel A ρ) → BinRel A (ρ ⊔ i ⊔ s)
-⋂ᵣ {j} {ρ} {s} I R = λ x y → (i : I) → Lift (ρ ⊔ j ⊔ s) (R i x y)
+⋂ᵣ : ∀ {i ρ s a} {A : Set a} (I : Set i)
+   → (I → BinRel A ρ)
+   → BinRel A (ρ ⊔ i ⊔ s)
+⋂ᵣ {i} {ρ} {s} I R = λ x y → (j : I)
+                           → Lift (ρ ⊔ i ⊔ s) (R j x y)
 
 ⇔isEq : ∀ {a ℓ} {A : Set a} → IsEquivalence {A = BinRel A ℓ} _⇔_
 ⇔isEq = record { refl = id , id

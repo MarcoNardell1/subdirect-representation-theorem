@@ -17,7 +17,7 @@ open import Setoid.Algebras  {𝑆 = 𝑆}
 open import Setoid.Homomorphisms using (hom ; IsHom ; IsMon ; compatible-map)
 open import Setoid.Homomorphisms.Isomorphisms {𝑆 = 𝑆}
 open import Setoid.Relations using (0rel ; fker)
-open import Setoid.Functions using (IsInjective ; IsSurjective)
+open import Setoid.Functions using (IsInjective ; IsSurjective ; eq)
 
 open import Prod.SubdirIrreducible {𝑆 = 𝑆} using ( SubdirectlyIrreducible ; IsSubIrreducible )
 open import Prod.NatMapProps {𝑆 = 𝑆} using ( familyOfRels
@@ -75,12 +75,15 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   famOfRels ab = proj₁ (famOfCongs ab)
 
   θab≠1 : (ab : I)
-        → ¬ (∀ (x y : 𝕌[ 𝐀 ]) → (proj₁ (proj₁ (θabCMI ab))) x y)
-  θab≠1 ab xθy = proj₁ (proj₂ (θabCMI ab))
-                       (xθy (proj₁ ab)
-                            (proj₁ (proj₂ ab))
-                       )
+        → θisNot1 𝐀 (proj₁ (θabCMI ab))
+  θab≠1 ab = a , b , proj₁ (proj₂ (θabCMI ab))
+    where
+      a : 𝕌[ 𝐀 ]
+      a = proj₁ ab
 
+      b : 𝕌[ 𝐀 ]
+      b = proj₁ (proj₂ ab) 
+ 
   𝐀/θabNonTrivial : (ab : I) → NonTrivialAlgebra {β = α} {ρ = ρᵅ} 
   𝐀/θabNonTrivial ab = quotNonTrivial n𝐀 (proj₁ (θabCMI ab)
                      , θab≠1 ab)
@@ -116,7 +119,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   subEmb : IsSubEmb 𝐀 fam natSubIrrMap
   subEmb = NatMapIsSubEmb 𝐀 famOfCongs ∩abθab⇔0A
 
-  open IsSubEmb subEmb renaming (Mon to natMapmon)
+  open IsSubEmb subEmb renaming (isMon to natMapmon)
   open IsMon natMapmon renaming (isHom to NMhom ; isInjective to inj)
   open IsHom NMhom renaming (compatible to comp)
 
@@ -155,7 +158,7 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
       FisInjective = inj
 
       FisSurjective : IsSurjective F
-      FisSurjective {iMap , x , fix=imap} = Setoid.Functions.eq x imapθfx
+      FisSurjective {iMap , x , fix=imap} = eq x imapθfx
         where
           imapθfx : (i : I) → proj₁ (proj₁ (θabCMI i)) (iMap i) x
           imapθfx i = θisym (fix=imap i)

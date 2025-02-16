@@ -23,33 +23,32 @@ module _ (𝐀 : Algebra α ρᵅ) where
   open Algebra 𝐀 renaming (Domain to A)
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈ₐ_)
 
-  _≈c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
-  θᵢ ≈c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇔ proj₁ θⱼ))
+  _≈c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ ρᵅ)
+  θᵢ ≈c θⱼ = proj₁ θᵢ ⇔ proj₁ θⱼ
 
-  _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))
-  θᵢ ⊆c θⱼ = Lift (ov ρᵅ) ((proj₁ θᵢ ⇒ proj₁ θⱼ))
+  _⊆c_ : Rel (Con 𝐀 {ρᵅ}) (α ⊔ ρᵅ)
+  θᵢ ⊆c θⱼ = proj₁ θᵢ ⇒ proj₁ θⱼ
 
   ≈-isEquiv : IsEquivalence _≈c_
-  ≈-isEquiv = record { refl = lift ((λ xθy → xθy) , λ xθy → xθy)
-                     ; sym = λ θ=ϕ → lift (proj₂ (lower θ=ϕ) , proj₁ (lower θ=ϕ))
-                     ; trans = λ θ=ϕ ϕ=ψ → lift
-                                              ( (( λ xθy → proj₁ (lower ϕ=ψ) (proj₁ (lower θ=ϕ) xθy)))
-                                              , λ xψy → proj₂ (lower θ=ϕ) (proj₂ (lower ϕ=ψ) xψy)
-                                              ) 
+  ≈-isEquiv = record { refl = ((λ xθy → xθy) , λ xθy → xθy)
+                     ; sym = λ θ=ϕ → (proj₂ θ=ϕ , proj₁ θ=ϕ)
+                     ; trans = λ θ=ϕ ϕ=ψ → ( ( λ xθy → proj₁ ϕ=ψ (proj₁ θ=ϕ xθy))
+                                            , λ xψy → proj₂  θ=ϕ (proj₂ ϕ=ψ xψy)
+                                            ) 
                      }
 
   ⊆-isPreorder : IsPreorder _≈c_ _⊆c_
   ⊆-isPreorder = record { isEquivalence = ≈-isEquiv
-                        ; reflexive = λ θ=ϕ → lift λ xθy → proj₁ (lower θ=ϕ) xθy
-                        ; trans = λ θ⊆ϕ ϕ⊆ψ → lift λ xθy → lower ϕ⊆ψ (lower θ⊆ϕ xθy)
+                        ; reflexive = λ θ=ϕ → λ xθy → proj₁  θ=ϕ xθy
+                        ; trans = λ θ⊆ϕ ϕ⊆ψ → λ xθy → ϕ⊆ψ (θ⊆ϕ xθy)
                         }
 
   ⊆-isPartialOrder : IsPartialOrder _≈c_ _⊆c_
   ⊆-isPartialOrder = record { isPreorder = ⊆-isPreorder
-                            ; antisym = λ θ⊆ϕ ϕ⊆θ → lift (lower θ⊆ϕ , lower ϕ⊆θ)
+                            ; antisym = λ θ⊆ϕ ϕ⊆θ → (θ⊆ϕ , ϕ⊆θ)
                             }
 
-  PosetOfCong : Poset (α ⊔ ov (ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
+  PosetOfCong : Poset (α ⊔ ov (ρᵅ)) (α ⊔ ρᵅ) (α ⊔ ρᵅ)
   PosetOfCong  = record { Carrier = Con 𝐀 {ρᵅ}
                         ; _≈_ = _≈c_
                         ; _≤_ = _⊆c_
@@ -62,52 +61,52 @@ module _ (𝐀 : Algebra α ρᵅ) where
   
   -- The meet operation of the Lattice of Congruences is the arbitrary intersection. 
   ⋀c : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ)) → Con 𝐀 {α ⊔ (ov ρᵅ)}
-  ⋀c  X = _∼_ , ∼Cong
+  ⋀c  Θ = _∩[Θ]_ , ∩ΘCong
     where
       -- Defining the relation of intersection of Congruences
-      _∼_ : Rel 𝕌[ 𝐀 ] (α ⊔ (ov ρᵅ))
-      x ∼ y = (R : Con 𝐀 {ρᵅ}) → X R → proj₁ R x y
+      _∩[Θ]_ : Rel 𝕌[ 𝐀 ] (α ⊔ (ov ρᵅ))
+      x ∩[Θ] y = (R : Con 𝐀 {ρᵅ}) → Θ R → proj₁ R x y
 
       -- Proving that the intersection of congruences is a congruence
-      x≈y→x∼y : {x y :  𝕌[ 𝐀 ]} → x ≈ₐ y → x ∼ y
-      x≈y→x∼y x=y R _ = Rreflexive x=y
+      x≈y→x∩Θy : {x y :  𝕌[ 𝐀 ]} → x ≈ₐ y → x ∩[Θ] y
+      x≈y→x∩Θy x=y R _ = Rreflexive x=y
         where
           open IsCongruence (proj₂ R) renaming (reflexive to Rreflexive) 
 
-      ∼refl : ∀ {x : 𝕌[ 𝐀 ]} → x ∼ x
-      ∼refl R R∈X = Rrefl
+      ∩Θrefl : ∀ {x : 𝕌[ 𝐀 ]} → x ∩[Θ] x
+      ∩Θrefl R R∈X = Rrefl
         where
           open IsCongruence (proj₂ R) renaming (is-equivalence to equiv)
           open IsEquivalence equiv renaming (refl to Rrefl)
 
-      ∼sym : ∀ {x y : 𝕌[ 𝐀 ]} → x ∼ y → y ∼ x
-      ∼sym x∼y R R∈X = Rsym (x∼y R R∈X)
+      ∩Θsym : ∀ {x y : 𝕌[ 𝐀 ]} → x ∩[Θ] y → y ∩[Θ] x
+      ∩Θsym x∩Θy R R∈X = Rsym (x∩Θy R R∈X)
         where
           open IsCongruence (proj₂ R) renaming (is-equivalence to equiv)
           open IsEquivalence equiv renaming (sym to Rsym)
 
-      ∼trans : ∀ {x y z : 𝕌[ 𝐀 ]} → x ∼ y → y ∼ z → x ∼ z
-      ∼trans x∼y y∼z R R∈X = Rtrans (x∼y R R∈X) (y∼z R R∈X)
+      ∩Θtrans : ∀ {x y z : 𝕌[ 𝐀 ]} → x ∩[Θ] y → y ∩[Θ] z → x ∩[Θ] z
+      ∩Θtrans x∩Θy y∩Θz R R∈X = Rtrans (x∩Θy R R∈X) (y∩Θz R R∈X)
         where
           open IsCongruence (proj₂ R) renaming (is-equivalence to equiv)
           open IsEquivalence equiv renaming (trans to Rtrans)
 
 
-      ∼IsEquiv : IsEquivalence _∼_
-      ∼IsEquiv = record { refl = ∼refl
-                        ; sym = ∼sym
-                        ; trans = ∼trans
+      ∩ΘIsEquiv : IsEquivalence _∩[Θ]_
+      ∩ΘIsEquiv = record { refl = ∩Θrefl
+                        ; sym = ∩Θsym
+                        ; trans = ∩Θtrans
                         }
 
-      ∼isCompatible : 𝐀 ∣≈ _∼_
-      ∼isCompatible 𝑓 evRel∼ R R∈X = comp 𝑓 (λ i → evRel∼ i R R∈X)
+      ∩ΘisCompatible : 𝐀 ∣≈ _∩[Θ]_
+      ∩ΘisCompatible 𝑓 evRel∼ R R∈X = comp 𝑓 (λ i → evRel∼ i R R∈X)
         where
           open IsCongruence (proj₂ R) renaming (is-compatible to comp)
       
-      ∼Cong : IsCongruence 𝐀 _∼_
-      ∼Cong = record { reflexive = x≈y→x∼y
-                     ; is-equivalence = ∼IsEquiv
-                     ; is-compatible = ∼isCompatible
+      ∩ΘCong : IsCongruence 𝐀 _∩[Θ]_
+      ∩ΘCong = record { reflexive = x≈y→x∩Θy
+                     ; is-equivalence = ∩ΘIsEquiv
+                     ; is-compatible = ∩ΘisCompatible
                      }
 
 
@@ -128,16 +127,4 @@ module _ (𝐀 : Algebra α ρᵅ) where
                → IsLowerBound _≤c_ X ϕ
                → ∀ {x y : Car} → (proj₁ ϕ) x y 
                → (proj₁ (⋀c X)) x y    
-  InfIsGreatLB X ϕ LB xϕy R R∈X = lower (LB R R∈X) xϕy -- LB R R∈X xϕy
-{-
-  InfExists : (X : Pred (Con 𝐀 {ρᵅ}) (α ⊔ (ov ρᵅ))) → IsInfimum _≤c_ X {!!} 
-  InfExists X = {!!}
-    where
-      ble : Set (α ⊔ (ov ρᵅ))
-      ble = Cg
-  
-      bli : Cg
-      bli = {!⋀c X!}
--}
-  postulate
-    congCompLattice : CompleteLattice (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ)) (α ⊔ (ov ρᵅ))
+  InfIsGreatLB X ϕ LB xϕy R R∈X = (LB R R∈X) xϕy
