@@ -348,7 +348,8 @@ module _ {I : Set i} (𝐀 : Algebra α ρᵅ) (𝓑 : I → Algebra β ρᵝ) (
       θⱼComp : 𝐀 ∣≈ θᵢ j
       θⱼComp 𝑓 {x} {y} xθⱼy = begin
         h (AInterp ⟨$⟩ (𝑓 , x)) j ≈⟨ gCompatible j ⟩
-        BjInterp ⟨$⟩ (𝑓 , λ a → h (x a) j) ≈⟨ cong BjInterp (≡.refl , xθⱼy) ⟩
+        BjInterp ⟨$⟩ (𝑓 , λ a → h (x a) j)
+        ≈⟨ cong BjInterp (≡.refl , xθⱼy) ⟩
         BjInterp ⟨$⟩ (𝑓 , λ a → h (y a) j) ≈⟨ symBj (gCompatible j) ⟩
         h (AInterp ⟨$⟩ (𝑓 , y)) j
         ∎

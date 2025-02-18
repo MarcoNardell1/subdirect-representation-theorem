@@ -93,7 +93,8 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
       0comp : (proj₁ n𝐀) ∣≈ 0rel {𝐴 = A} {𝐵 = A} {ℓ = ρᵅ}
       0comp 𝑓 {x} {y} x0y = lift
         (begin
-        <$> AInterp (𝑓 , λ a → (x a)) ≈⟨ cong AInterp (≡.refl , λ a → lower (x0y a)) ⟩
+        <$> AInterp (𝑓 , λ a → (x a))
+        ≈⟨ cong AInterp (≡.refl , λ a → lower (x0y a)) ⟩
         <$> AInterp (𝑓 , λ a → (y a))
         ∎)
         where
