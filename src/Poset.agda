@@ -201,8 +201,9 @@ module _ {c ℓ₁ ℓ₂} (𝐏 : Poset c ℓ₁ ℓ₂) where
   open IsPreorder preO renaming (isEquivalence to equiv ; trans to ≤trans)
   open IsEquivalence equiv renaming (refl to reflp ; sym to symp ; trans to transp)
 
-  compLatticeDef : (∀ {ℓ} (X : Pred P ℓ) → Σ[ ⋀_ ∈ (Op P) ] (IsInfimum _≤p_ X (⋀ X)))
-                 → CompleteLattice c ℓ₁ ℓ₂ (c ⊔ ℓ₂) (c ⊔ ℓ₂)
+  compLatticeDef : (∀ {ℓ} (X : Pred P ℓ) →
+                 Σ[ ⋀_ ∈ (Op P) ] (IsInfimum _≤p_ X (⋀ X)))
+                → CompleteLattice c ℓ₁ ℓ₂ (c ⊔ ℓ₂) (c ⊔ ℓ₂)
   compLatticeDef prop = record
                        { Carrier = P
                        ; _≈_ = _≈p_
