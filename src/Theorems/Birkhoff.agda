@@ -45,7 +45,7 @@ Theorem:
 Every nontrivial algebra is isomorphic to a subdirect product of subdirectly irreducible algebras
 -}
 
-{- Given a nontrivial algebra, we need to define a subdirect product by giving an arbitrary set of indexes -}
+{- Given a nontrivial algebra, we need to define a subdirect-}
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   𝐀 : Algebra α ρᵅ
   𝐀 = proj₁ n𝐀
@@ -54,14 +54,14 @@ module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   open Setoid A renaming (Carrier to Car ; _≈_ to _≈a_ ; isEquivalence to equiv)
   open IsEquivalence equiv renaming (refl to Arefl)
 
-  -- Seria existe x, existe y tales que x ≠ y
   I : Set (α ⊔ ρᵅ)
   I =  Σ[ x ∈ 𝕌[ 𝐀 ] ] Σ[ y ∈ 𝕌[ 𝐀 ] ] ¬ (x ≈a y)
 
-  -- Usar el Lema de Zorn para dar la congruencia maximal en la cadena que excluye (a , b)
-  -- existe θ una congruencia, maximal con respecto a la exclusion de (a , b) 
-  -- 1. Sabiendo que (a , b) ∉ θab ⇒ θab ≠ 1_A
-  -- 2. Sabiendo que es maximal tambien ⇒ θabIsCongCMI
+{- Postulating the following step:
+Using Zorn's Lemma to find a maximal congruence on the chain Θa,b
+defined by the exclusion of {a ,b}. Moreover, this congruence is
+completely meet irreducible
+-}
   postulate
     θabCMI : (ab : I)
            → Σ[ θ ∈ (Con 𝐀 {ρᵅ}) ]

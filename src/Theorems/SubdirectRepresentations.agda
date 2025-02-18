@@ -61,16 +61,6 @@ open MeetIrreducible
  2. 0_A is CMI in Con 𝐀 implies A is subdir irreducible
 -}
 
-{-
-  bundles → records types
-  structures → sigma types
-
-  Un problema dado por bundles es que el heredar propiedades no se ve posible, dado que los records son estructuras de mas alto nivel, a su vez agregan mas complejidad, la misma puede ser resuelta con renombres y otras tacticas. A priori el pasar las congruencias tiene que ir por otro lado.
-  como no podemos asegurar que el carrier sean las congruencias podemos:
-    - Escribir una funcion que dado un set y una prueba de que es un reticulado completo,
-    construir un par donde el primer elemento es un bundle y el segundo un record. 
--}
-
 -- Proving that 0 is a congruence relation over 𝐀
 module _ (n𝐀 : NonTrivialAlgebra {β = α} {ρ = ρᵅ}) where
   open Algebra (proj₁ n𝐀) renaming ( Domain to A
